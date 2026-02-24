@@ -28,7 +28,7 @@
     <title>Verum - Cadastro</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="colors.php">
-    <base href="/Mobile_Verum/">
+    <base href="/Project-Verum/">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>

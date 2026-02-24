@@ -1,5 +1,5 @@
 RewriteEngine On
-RewriteBase /Mobile_Verum/
+RewriteBase /Project-Verum/
 
 RewriteRule ^signup/?$ signup.php [L]
 RewriteRule ^home/?$ home.php [L]
