@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #222;
+        }
+        canvas {
+            border: 2px solid #666;
+            background: #333;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="640" height="480"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const TILE_SIZE = 32;
+        
+        // Cursor position in tile coordinates
+        let cursorTileX = 0;
+        let cursorTileY = 0;
+        
+        // Track mouse movement
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            // Convert pixel position to tile coordinates
+            cursorTileX = Math.floor(mouseX / TILE_SIZE);
+            cursorTileY = Math.floor(mouseY / TILE_SIZE);
+            
+            console.log(`Tile: (${cursorTileX}, ${cursorTileY}) | Pixel: (${mouseX}, ${mouseY})`);
+        });
+        
+        // Draw grid and cursor highlight
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid lines
+            ctx.strokeStyle = '#444';
+            ctx.lineWidth = 1;
+            
+            for (let x = 0; x <= canvas.width; x += TILE_SIZE) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            
+            for (let y = 0; y <= canvas.height; y += TILE_SIZE) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+            
+            // Highlight current tile
+            ctx.fillStyle = 'rgba(0, 255, 0, 0.3)';
+            ctx.fillRect(
+                cursorTileX * TILE_SIZE,
+                cursorTileY * TILE_SIZE,
+                TILE_SIZE,
+                TILE_SIZE
+            );
+            
+            // Draw tile coordinate text
+            ctx.fillStyle = '#fff';
+            ctx.font = '14px monospace';
+            ctx.fillText(`Tile: ${cursorTileX}, ${cursorTileY}`, 10, 20);
+            
+            requestAnimationFrame(draw);
+        }
+        
+        draw();
+    </script>
+</body>
+</html>
