@@ -1,7 +1,6 @@
 <?php
 /**
  * API Endpoint: Check for New Friend Requests
- * Returns new friend requests since last check
  */
 
 header('Content-Type: application/json');
@@ -9,7 +8,6 @@ include 'PhpShits/conn.php';
 include 'PhpShits/userFunctions.php';
 include 'PhpShits/connectionsUsersFuncs.php';
 
-// Get parameters
 $userId = isset($_GET['userId']) ? intval($_GET['userId']) : 0;
 $lastCheck = isset($_GET['lastCheck']) ? intval($_GET['lastCheck']) : 0;
 
@@ -57,11 +55,29 @@ if (!empty($newRequests)) {
     $conn->query("UPDATE user_connections SET notification_shown = 1 WHERE id IN ($idList)");
 }
 
-echo json_encode([
+// Send push notification if there are new requests
+if (count($newRequests) > 0 && $lastCheck == 0) {
+    include_once 'PhpShits/simplePush.php';
+    initPushNotifications($conn);
+    
+    $senderName = $newRequests[0]['username'];
+    sendSimplePush(
+        $conn, 
+        $userId, 
+        'Novo Pedido de Amizade', 
+        "$senderName enviou um pedido de amizade", 
+        '', 
+        '/inbox'
+    );
+}
+
+$response = [
     'success' => true,
     'newRequests' => $newRequests,
     'count' => count($newRequests),
     'lastCheck' => time()
-]);
+];
+
+echo json_encode($response);
 
 $conn->close();
