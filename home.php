@@ -327,10 +327,12 @@ imagemVisu.addEventListener("touchmove", dragMove, { passive: false });
 imagemVisu.addEventListener("touchend", endDrag);
 </script>
 <!-- macumba pra notificações baitolass yay -->
+<script src="push-notifications.js"></script>
 <script>
+// Register service worker for push notifications
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
+        navigator.serviceWorker.register('sw.js')
             .then(reg => {
                 console.log('Service Worker registrado:', reg.scope);
             })
@@ -340,14 +342,118 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-navigator.serviceWorker.ready.then(reg => {
-    reg.showNotification('Nova mensagem', {
-        body: 'Você recebeu uma nova mensagem',
-        icon: '/icon.png',
-        badge: '/badge.png'
+// Request notification permission on page load
+if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission().then(permission => {
+        console.log('Notification permission:', permission);
     });
-});
+}
 
+// Background notification checker - runs periodically
+let notificationCheckInterval;
+let lastCheckTime = 0;
+let lastFeaturesCheck = 0;
+
+function startNotificationChecker() {
+    // Check immediately on page load
+    checkForNotifications();
+    checkForNewFeatures();
+    
+    // Then check every 30 seconds in the background
+    notificationCheckInterval = setInterval(() => {
+        checkForNotifications();
+        checkForNewFeatures();
+    }, 30000);
+}
+
+async function checkForNotifications() {
+    try {
+        const userId = getCookie('UserId');
+        if (!userId) return;
+        
+        const response = await fetch(`check-friend-requests.php?userId=${userId}&lastCheck=${lastCheckTime}`);
+        const data = await response.json();
+        
+        // Check if there are actual new requests in the JSON
+        if (data.success && data.newRequests && data.newRequests.length > 0) {
+            // Show notification only if there are actual new requests
+            data.newRequests.forEach(request => {
+                showNotification('Novo Pedido de Amizade', `${request.username} enviou um pedido de amizade`);
+            });
+            lastCheckTime = data.lastCheck;
+        }
+    } catch (error) {
+        console.error('Error checking notifications:', error);
+    }
+}
+
+async function checkForNewFeatures() {
+    try {
+        const response = await fetch(`check-new-features.php?lastCheck=${lastFeaturesCheck}`);
+        const data = await response.json();
+        
+        // Check if there are actual new features in the JSON
+        if (data.success && data.newFeatures && data.newFeatures.length > 0) {
+            // Show notification only if there are actual new features
+            data.newFeatures.forEach(feature => {
+                showNotification(feature.title, feature.message);
+            });
+            lastFeaturesCheck = data.lastCheck;
+        }
+    } catch (error) {
+        console.error('Error checking new features:', error);
+    }
+}
+
+function showNotification(title, body) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        // Use Service Worker for notification
+        navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification(title, {
+                body: body,
+                icon: 'Default_Profile_Pics/1.png',
+                badge: 'icon.png',
+                tag: 'friend-request',
+                requireInteraction: true,
+                data: { url: 'inbox.php' }
+            });
+        }).catch(err => {
+            // Fallback to regular notification
+            new Notification(title, {
+                body: body,
+                icon: 'Default_Profile_Pics/1.png'
+            });
+        });
+    }
+}
+
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+}
+
+// Start the notification checker when the page loads
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startNotificationChecker);
+} else {
+    startNotificationChecker();
+}
+
+// Stop checking when page is hidden to save resources
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        clearInterval(notificationCheckInterval);
+    } else {
+        checkForNotifications();
+        checkForNewFeatures();
+        notificationCheckInterval = setInterval(() => {
+            checkForNotifications();
+            checkForNewFeatures();
+        }, 30000);
+    }
+});
 </script>
 </body>
 </html>

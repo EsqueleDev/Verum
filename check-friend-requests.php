@@ -55,9 +55,10 @@ if (!empty($newRequests)) {
     $conn->query("UPDATE user_connections SET notification_shown = 1 WHERE id IN ($idList)");
 }
 
-// Send push notification if there are new requests
+// Send push notification if there are new requests (only if lastCheck is 0 - first load)
 if (count($newRequests) > 0 && $lastCheck == 0) {
     include_once 'PhpShits/simplePush.php';
+    include_once 'PhpShits/pushNotificationFuncs.php';
     initPushNotifications($conn);
     
     $senderName = $newRequests[0]['username'];
@@ -70,6 +71,9 @@ if (count($newRequests) > 0 && $lastCheck == 0) {
         '/inbox'
     );
 }
+
+// Only respond with requests if lastCheck is 0 (initial load)
+// Otherwise just return empty to avoid duplicate notifications
 
 $response = [
     'success' => true,

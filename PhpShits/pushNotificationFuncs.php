@@ -34,11 +34,11 @@ function savePushSubscription($conn, $userId, $endpoint, $keys) {
     if ($result->num_rows > 0) {
         // Update existing subscription
         $stmt = $conn->prepare("UPDATE push_subscriptions SET keys_p256dh = ?, keys_auth = ? WHERE user_id = ? AND endpoint = ?");
-        $stmt->bind_param("ssIS", $keys['p256dh'], $keys['auth'], $userId, $endpoint);
+        $stmt->bind_param("ssss", $keys['p256dh'], $keys['auth'], $userId, $endpoint);
     } else {
         // Insert new subscription
         $stmt = $conn->prepare("INSERT INTO push_subscriptions (user_id, endpoint, keys_p256dh, keys_auth) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("ISSS", $userId, $endpoint, $keys['p256dh'], $keys['auth']);
+        $stmt->bind_param("isss", $userId, $endpoint, $keys['p256dh'], $keys['auth']);
     }
     
     return $stmt->execute();
