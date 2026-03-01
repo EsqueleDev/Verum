@@ -31,7 +31,7 @@
 
         <div class="action-card">
             <p>
-                Ative as notificações do Verum para ver Pedidos de Amizade e Mensagens:
+                Ative as notificações do Verum para ver Pedidos de Amizade, Mensagens e Novidades da Beta:
             </p>
             <button class="btn btn-primary" onclick="Notification.requestPermission()">
                 <div style="display: grid; grid-template-columns: 16% 87%;">

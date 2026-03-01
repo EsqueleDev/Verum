@@ -3,7 +3,10 @@
     include 'PhpShits/userFunctions.php';
     include 'PhpShits/connectionsUsersFuncs.php';
     include 'PhpShits/algoritimoMACHO.php';
-
+    if (!isset($_COOKIE['UserId'])) {
+        header("Location: index.php");
+        exit;
+    }
     $me = getUserInfo($conn, $_COOKIE['UserId']);
 ?>
 <!DOCTYPE html>
@@ -14,6 +17,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css?id=1">
     <link rel="stylesheet" href="colors.php">
+    <link rel="manifest" href="manifest.json" />
+    <!-- ios support -->
+    <link rel="apple-touch-icon" href="Page_Icon.png" />
+    <meta name="apple-mobile-web-app-status-bar" content="#1a1522" />
+    <meta name="theme-color" content="#1a1522" />
 </head>
 <body>
 
@@ -65,11 +73,11 @@
                 <h3>Pessoas Para Conhecer:</h3>
 
                 <div class="suggestions">
-                    <?php foreach($randUsers as $rUser): ?>
-                        <div class="suggestion-card">
+                    <?php foreach($randUsers as $rUser): ?>     
+                        <a href="profile.php?id=<?= $rUser['id'] ?>"><div class="suggestion-card">
                             <div class="suggest-avatar avatar-a" style="background: url(<?= $rUser['profilePic'] ?>);  background-repeat: no-repeat;  background-size: cover;"></div>
                             <span><?= $rUser['username'] ?></span>
-                        </div>
+                        </div></a>
                     <?php endforeach ?>
                 </div>
             </section>
@@ -106,7 +114,7 @@
         <article class="post-card">
             <p class="post-text">
                 <h2>Dica do Verum:</h2>
-                Por enquanto estamos em Beta, não temos oque ensinar.
+                Quando reiniciar a pagina podera ver uma dica de coisas novas sobre Verum, mas por enquanto nada
             </p>
         </article>
         
@@ -248,7 +256,7 @@
     </div>
     <div class="imagem-bottom">
         <center onclick="zoomInImageViwer()"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Zm-40-60v-80h-80v-80h80v-80h80v80h80v80h-80v80h-80Z"/></svg></center>
-        <center><span>Ver os Comentarios</span></center>
+        <center><span style="cursor: block;">Ver os Comentarios</span></center>
         <center onclick="zoomOutImageViwer()"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400ZM280-540v-80h200v80H280Z"/></svg></center>
     </div>
 </div>
@@ -371,15 +379,24 @@ async function checkForNotifications() {
         const userId = getCookie('UserId');
         if (!userId) return;
         
+        // Only show browser notifications on first check (lastCheckTime === 0)
+        // Subsequent checks just track without showing duplicate notifications
+        const isFirstCheck = lastCheckTime === 0;
+        
         const response = await fetch(`check-friend-requests.php?userId=${userId}&lastCheck=${lastCheckTime}`);
         const data = await response.json();
         
         // Check if there are actual new requests in the JSON
         if (data.success && data.newRequests && data.newRequests.length > 0) {
-            // Show notification only if there are actual new requests
-            data.newRequests.forEach(request => {
-                showNotification('Novo Pedido de Amizade', `${request.username} enviou um pedido de amizade`);
-            });
+            // Only show notification on first check to avoid duplicates
+            if (isFirstCheck) {
+                data.newRequests.forEach(request => {
+                    showNotification('Novo Pedido de Amizade', `${request.username} enviou um pedido de amizade`);
+                });
+            }
+            lastCheckTime = data.lastCheck;
+        } else if (data.success) {
+            // Update lastCheck even if no new requests
             lastCheckTime = data.lastCheck;
         }
     } catch (error) {
@@ -387,23 +404,6 @@ async function checkForNotifications() {
     }
 }
 
-async function checkForNewFeatures() {
-    try {
-        const response = await fetch(`check-new-features.php?lastCheck=${lastFeaturesCheck}`);
-        const data = await response.json();
-        
-        // Check if there are actual new features in the JSON
-        if (data.success && data.newFeatures && data.newFeatures.length > 0) {
-            // Show notification only if there are actual new features
-            data.newFeatures.forEach(feature => {
-                showNotification(feature.title, feature.message);
-            });
-            lastFeaturesCheck = data.lastCheck;
-        }
-    } catch (error) {
-        console.error('Error checking new features:', error);
-    }
-}
 
 function showNotification(title, body) {
     if ('Notification' in window && Notification.permission === 'granted') {

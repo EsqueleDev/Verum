@@ -38,7 +38,7 @@
     <header class="app-header">
         <button class="icon-btn" onclick="window.history.back();"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="m313-440 224 224-57 56-320-320 320-320 57 56-224 224h487v80H313Z"/></svg></button>
         <span class="app-title">Perfil</span>
-        <button class="icon-btn"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"/></svg></button>
+        <button style="cursor: block;" class="icon-btn"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"/></svg></button>
     </header>
 
     <!-- CONTEÚDO -->
@@ -177,7 +177,16 @@
                 <h2 style="font-size:24px; font-weight:500;">Amigos:</h2>
             </center><br>
             <hr>
-            <!-- Saved content will be added later -->
+            <?php $userFriends = getAllFriendFromUser($conn, $Profile['id']) ?>
+            <div class="suggestions" style="padding: 12px;">    
+                <?php foreach($userFriends as $friend): ?>
+                    <?php $friend = getUserInfo($conn, $friend['friend_id']) ?>
+                    <a href="profile.php?id=<?= $friend['id'] ?>"><div class="suggestion-card">
+                        <div class="suggest-avatar avatar-a" style="background: url(<?= $friend['profilePic'] ?>);  background-repeat: no-repeat;  background-size: cover;"></div>
+                        <span><?= $friend['username'] ?></span>
+                    </div></a>
+                <?php endforeach; ?>
+            </div>
         </div>
 
         <div id="tab-about" class="tab-content">
@@ -185,7 +194,73 @@
                 <h2 style="font-size:24px; font-weight:500;">Sobre:</h2>
             </center><br>
             <hr>
-            <!-- About content will be added later -->
+            <div class="two-options" id="about-options">
+                <div class="a-option" onclick="showAboutSection('gostos')">
+                    <span class="title">Gostos Pessoais</span>
+                    <svg class="arrow" xmlns="http://www.w3.org/2000/svg"
+                        height="24px"
+                        viewBox="0 -960 960 960"
+                        width="24px"
+                        fill="#FFFFFF">
+                        <path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/>
+                    </svg>
+                </div>
+                <div class="a-option" onclick="showAboutSection('spotify')">
+                    <span class="title">Informações do Spotify</span>
+                    <svg class="arrow" xmlns="http://www.w3.org/2000/svg"
+                        height="24px"
+                        viewBox="0 -960 960 960"
+                        width="24px"
+                        fill="#FFFFFF">
+                        <path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/>
+                    </svg>
+                </div>
+            </div>
+            
+            <!-- Gostos Pessoais Section -->
+            <div id="about-gostos" class="about-detail" style="display: none;">
+                <div class="about-header">
+                    <button class="icon-btn" onclick="hideAboutSection()">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF">
+                            <path d="m313-440 224 224-57 56-320-320 320-320 57 56-224 224h487v80H313Z"/>
+                        </svg>
+                    </button>
+                    <h2 style="font-size:20px; font-weight:500;">Gostos Pessoais</h2>
+                </div>
+                <hr>
+                <?php $userLikes = getUserLikes($conn, $Profile['id']); ?>
+                
+                    <div style="padding: 12px;">
+                        <h4>Tags Seguidas:</h4>
+                    </div>
+                    <div class="likes-container">
+                        <?php if (count($userLikes) > 0): ?> 
+                            <?php foreach($userLikes as $like): ?>
+                                <span class="like-chip"><?= htmlspecialchars($like) ?></span>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <p style="padding: 16px; text-align: center; color: var(--on-surface);">
+                                Este usuário ainda não selecionou seus gostos pessoais.
+                            </p>
+                        <?php endif; ?>
+                    </div>
+            </div>
+            
+            <!-- Informações do Spotify Section -->
+            <div id="about-spotify" class="about-detail" style="display: none;">
+                <div class="about-header">
+                    <button class="icon-btn" onclick="hideAboutSection()">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF">
+                            <path d="m313-440 224 224-57 56-320-320 320-320 57 56-224 224h487v80H313Z"/>
+                        </svg>
+                    </button>
+                    <h2 style="font-size:20px; font-weight:500;">Informações do Spotify</h2>
+                </div>
+                <hr>
+                <p style="padding: 16px; text-align: center; color: var(--on-surface);">
+                    Em breve: integração com Spotify
+                </p>
+            </div>
         </div>
 
         <script>
@@ -233,6 +308,7 @@
         }
         
         function switchTab(tabName, direction) {
+            hideAboutSection();
             // Determine animation direction if not specified
             const currentIndex = currentTabIndex;
             const newIndex = tabOrder.indexOf(tabName);
@@ -271,6 +347,43 @@
             const tabIndex = tabOrder.indexOf(tabName);
             if (buttons[tabIndex]) {
                 buttons[tabIndex].classList.add('button-profile-selected');
+            }
+        }
+        
+        // About section navigation
+        function showAboutSection(section) {
+            const aboutOptions = document.getElementById('about-options');
+            const gostosSection = document.getElementById('about-gostos');
+            const spotifySection = document.getElementById('about-spotify');
+            
+            // Hide the options menu
+            if (aboutOptions) {
+                aboutOptions.style.display = 'none';
+            }
+            
+            // Show the appropriate section
+            if (section === 'gostos' && gostosSection) {
+                gostosSection.style.display = 'block';
+                gostosSection.style.animation = 'fadeSlideIn 0.3s ease-out forwards';
+            } else if (section === 'spotify' && spotifySection) {
+                spotifySection.style.display = 'block';
+                spotifySection.style.animation = 'fadeSlideIn 0.3s ease-out forwards';
+            }
+        }
+        
+        function hideAboutSection() {
+            const aboutOptions = document.getElementById('about-options');
+            const gostosSection = document.getElementById('about-gostos');
+            const spotifySection = document.getElementById('about-spotify');
+            
+            // Hide all detail sections
+            if (gostosSection) gostosSection.style.display = 'none';
+            if (spotifySection) spotifySection.style.display = 'none';
+            
+            // Show the options menu
+            if (aboutOptions) {
+                aboutOptions.style.display = 'grid';
+                aboutOptions.style.animation = 'fadeSlideIn 0.3s ease-out forwards';
             }
         }
         </script>

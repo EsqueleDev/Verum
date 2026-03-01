@@ -116,4 +116,34 @@
             return false;
         }
     }
+
+    function getAllFriendFromUser($conn, $userId){
+        $stmt = $conn->prepare("
+            SELECT *
+            FROM user_connections
+            WHERE (user2 = ? OR user1 = ?) AND status = 'accepted'
+            ORDER BY id DESC
+        ");
+        
+        $stmt->bind_param("ii", $userId, $userId);
+        $stmt->execute();
+
+        $result = $stmt->get_result();
+        if ($result->num_rows === 0) return [];
+
+        $requests = [];
+
+        while ($row = $result->fetch_assoc()) {
+
+            if ($row['user1'] == $userId) {
+                $row['friend_id'] = $row['user2'];
+            } else {
+                $row['friend_id'] = $row['user1'];
+            }
+
+            $requests[] = $row;
+        }
+
+        return $requests;
+    }
 ?>

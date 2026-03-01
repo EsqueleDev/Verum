@@ -400,7 +400,8 @@ hr{
 }
 
 .suggestions {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 22px;
 }
 
@@ -1045,5 +1046,76 @@ a{
     .imagem-top,
     .imagem-bottom {
         height: 48px;
+    }
+}
+
+.two-options{
+    display: grid;
+    padding: 24px;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.a-option{
+    position: relative; /* importante */
+    padding: 12px;
+    width: 100%;
+    border-radius: 12px;
+    min-height: 140px;
+    border: 2px var(--button) solid;
+}
+
+.a-option:hover{
+    background: var(--button);
+}
+
+.arrow{
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+}
+
+/* About section detail styles */
+.about-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+}
+
+.about-header h2 {
+    margin: 0;
+    color: var(--on-surface);
+}
+
+.about-detail {
+    padding-bottom: 20px;
+}
+
+.likes-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 16px;
+}
+
+.like-chip {
+    display: inline-block;
+    padding: 8px 16px;
+    background: var(--button);
+    color: var(--on-button);
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+/* Animation keyframes */
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }

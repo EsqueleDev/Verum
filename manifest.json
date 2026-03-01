@@ -1,0 +1,43 @@
+{
+  "name": "Verum Versão Beta",
+  "short_name": "Verum",
+  "start_url": "index.php",
+  "display": "standalone",
+  "background_color": "#1a1522",
+  "theme_color": "#1a1522",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "Page_Icon.png",
+      "type": "image/png", "sizes": "72x72"
+    },
+    {
+      "src": "Page_Icon.png",
+      "type": "image/png", "sizes": "96x96"
+    },
+    {
+      "src": "Page_Icon.png",
+      "type": "image/png","sizes": "128x128"
+    },
+    {
+      "src": "Page_Icon.png",
+      "type": "image/png", "sizes": "144x144"
+    },
+    {
+      "src": "Page_Icon.png",
+      "type": "image/png", "sizes": "152x152"
+    },
+    {
+      "src": "Page_Icon.png",
+      "type": "image/png", "sizes": "192x192"
+    },
+    {
+      "src": "Page_Icon.png",
+      "type": "image/png", "sizes": "384x384"
+    },
+    {
+      "src": "Page_Icon.png",
+      "type": "image/png", "sizes": "512x512"
+    }
+  ]
+}
