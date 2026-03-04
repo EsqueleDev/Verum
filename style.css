@@ -1120,3 +1120,76 @@ a{
         transform: translateY(0);
     }
 }
+
+.SideBarConteiner{
+    display: none;
+    grid-template-columns: 75% 25%;
+    z-index: 99999;
+    position: fixed;
+    top: 0px;
+    right: 0px;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.SideBar{
+    padding: 24px;
+    width: 100%;
+    height: 100%;
+    background: var(--div);
+    max-height: 100vh;
+    overflow-y: auto
+}
+
+.closeSideBar{
+    width: 100%;
+    height: 100%;
+}
+
+.SideBarContent{
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    justify-content: center;
+    align-items: center;
+    margin-top: 12px;
+}
+
+@media (max-width: 600px) {
+    .hideMobile{
+        display: none;
+    }
+}
+
+/* Agora a parte do PC */
+
+@media screen and (min-width: 1024px) {
+    body{
+        display: grid;
+        grid-template-columns: 1fr 2fr 1fr;
+    }
+    
+    .app-container{
+        max-height: 100vh;
+        overflow-y: auto;
+    }
+    
+    .SideBar{
+        background: var(--background-app);
+    }
+    
+    .app-container{
+        max-width: 100%;
+    }
+    
+    .hidePC{
+        display: none;
+    }
+    
+    .SideBarPc{
+        padding: 24px;
+        width: 100%;
+        height: 100%;
+    }
+}

@@ -20,6 +20,12 @@
         changeFriendRequestStatus($conn, $Profile['id'], $me['id'], 'rejected');
         echo "<script>window.location.href = document.referrer;</script>";
     }
+    
+    else if(isset($_GET['request']) && $_GET['request'] == 'retry'){
+        retryFriendRequestStatus($conn, $Profile['id'], $me['id']);
+        echo "<script>window.location.href = document.referrer;</script>";
+    }
+    
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -77,12 +83,12 @@
                     <!-- PEDIDO ENVIADO POR MIM -->
                     <button class="btn btn-secondary" disabled>Pedido Enviado</button>
 
-                <?php elseif ($status === 'rejected' && $didISend): ?>
+                <?php elseif ($status === 'rejected' && !$didISend): ?>
 
                     <!-- PEDIDO ENVIADO POR MIM -->
                     <div class="button-group">
                         <button class="btn btn-secondary" disabled>Bloquear?</button>
-                        <button class="btn btn-primary" disabled>Dar outra chance</button>
+                        <a href='profile.php?id=<?= $Profile['id'] ?>&request=retry'><button class="btn btn-primary" >Dar outra chance</button></a>
                     </div>
 
                 <?php elseif (($status === 'rejected' || $status === 'blocked') && $didISend): ?>

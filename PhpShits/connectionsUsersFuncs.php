@@ -39,7 +39,7 @@
     // Send push notification when a friend request is made
     function sendFriendRequestNotification($conn, $senderId, $recipientId) {
         // Get sender info
-        $stmt = $conn->prepare("SELECT username, profilePic FROM user WHERE id = ?");
+        $stmt = $conn->prepare("SELECT username, profilePic FROM users WHERE id = ?");
         $stmt->bind_param("i", $senderId);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -65,11 +65,30 @@
             error_log("Friend request notification triggered: From user $senderId to user $recipientId");
         }
     }
+    
     function changeFriendRequestStatus($conn, $howSend, $howReceive, $newStatus){
         $connection = getUserConnectionInfo($conn, $howSend, $howReceive);
         if(!is_null($connection)){
             $stmt = $conn->prepare("UPDATE user_connections SET status = ? WHERE user1 = ? AND user2 = ?");
             $stmt->bind_param("sii", $newStatus, $howSend, $howReceive);
+            if ($stmt->execute()) {
+                return true;
+            }
+            else{
+                return false;
+            }
+            $stmt->close();
+        }
+        else{
+            return false;
+        }
+    }
+    
+    function retryFriendRequestStatus($conn, $howSend, $howReceive){
+        $connection = getUserConnectionInfo($conn, $howSend, $howReceive);
+        if(!is_null($connection)){
+            $stmt = $conn->prepare("DELETE FROM user_connections WHERE (user1 = ? AND user2 = ?) OR (user2 = ? AND user1 = ?)");
+            $stmt->bind_param("iiii", $howSend, $howReceive, $howSend, $howReceive);
             if ($stmt->execute()) {
                 return true;
             }

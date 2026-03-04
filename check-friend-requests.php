@@ -28,7 +28,7 @@ if (!$columnExists) {
 $stmt = $conn->prepare("
     SELECT uc.id, uc.user1, u.username, u.profilePic, uc.created_at
     FROM user_connections uc
-    JOIN user u ON uc.user1 = u.id
+    JOIN users u ON uc.user1 = u.id
     WHERE uc.user2 = ? AND uc.status = 'pendend' AND (uc.notification_shown = 0 OR uc.notification_shown IS NULL)
     ORDER BY uc.id DESC
 ");
