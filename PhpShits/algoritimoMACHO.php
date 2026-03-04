@@ -19,7 +19,7 @@
         $posts = [];
         while ($row = $result->fetch_assoc()) {
             // Get user info for each post
-            $userStmt = $conn->prepare("SELECT username, profilePic FROM user WHERE id = ?");
+            $userStmt = $conn->prepare("SELECT username, profilePic FROM users WHERE id = ?");
             $userStmt->bind_param("i", $row['userId']);
             $userStmt->execute();
             $userResult = $userStmt->get_result();

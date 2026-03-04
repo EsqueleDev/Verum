@@ -304,6 +304,7 @@ body {
     padding: 0 16px;
     background: var(--background-app);
     border-bottom: 1px solid var(--on-div);
+    z-index: 9999;
 }
 
 .app-title {

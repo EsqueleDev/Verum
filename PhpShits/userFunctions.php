@@ -1,6 +1,6 @@
 <?php
     function getUserInfo($conn, $userId, $userAuthId = null){
-        $stmt = $conn->prepare("SELECT * FROM user WHERE id = ?");
+        $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
         $stmt->bind_param("i", $userId);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -52,7 +52,7 @@
     function getLastUsersToEnterWebsite($conn, $page){
         $page  = max(1, (int)$page);
         $offset = ($page * 6) - 6;
-        $stmt = $conn->prepare("SELECT id, username, profilePic FROM user ORDER BY id DESC LIMIT 3 OFFSET ?");
+        $stmt = $conn->prepare("SELECT id, username, profilePic FROM users ORDER BY id DESC LIMIT 3 OFFSET ?");
         $stmt->bind_param("i", $offset);
         $stmt->execute();
 

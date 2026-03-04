@@ -41,7 +41,7 @@
         <?php $posts = algoritmoGeralSite($conn, $me['id'], 1, 3); ?>
         <?php foreach($posts as $post): ?>
             <article class="post-card">
-                <a href='profile.php?id=<?= $post['userId'] ?>'><div class="post-header">
+                <a href='profile.php?id=<?= $post['userId'] ?>'><div class="post-header" style='margin-bottom: 12px;'>
                     <div class="avatar" style="background: url(<?= htmlspecialchars($post['user']['profilePic'] ?? '') ?>); background-repeat: no-repeat; background-size: cover;"></div>
                     <div class="post-user">
                         <strong><?= htmlspecialchars($post['user']['username'] ?? 'Usuário') ?></strong>
@@ -50,7 +50,7 @@
                 </div></a>
 
                 <p class="post-text">
-                    <h2><?= htmlspecialchars($post['titulo'] ?? '') ?></h2>
+                    <h2><?= htmlspecialchars($post['titulo'] ?? '') ?></h2><br>
                     <?php if($post['tipo'] == 'texto'): ?>
                         <?= nl2br(htmlspecialchars($post['conteudo'] ?? '')) ?>
                     <?php endif; ?>
@@ -64,6 +64,7 @@
                         Your browser does not support the video tag.
                     </video>
                 <?php endif; ?>
+                <br>
                 <hr>
             </article>
         <?php endforeach ?>

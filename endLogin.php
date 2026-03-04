@@ -5,7 +5,7 @@
     <title>Verum - Próximos Passos</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="colors.php">
-    <base href="/Project-Verum/">
+    <base href="/">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>

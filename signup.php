@@ -8,7 +8,7 @@
         $email = $_POST['email'];
         $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
         $profilePic = "Default_Profile_Pics/" . rand(1, 14) . ".png";
-        $sql = "INSERT INTO user (userAuthId, username, email, password, profilePic)
+        $sql = "INSERT INTO users (userAuthId, username, email, password, profilePic)
             VALUES ('$userAuthId', '$username', '$email', '$password', '$profilePic')";
 
         if ($conn->query($sql) === TRUE) {
@@ -28,7 +28,7 @@
     <title>Verum - Cadastro</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="colors.php">
-    <base href="/Project-Verum/">
+    <base href="/">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>

@@ -42,7 +42,7 @@
             }
         }
 
-        $sql = "UPDATE user SET username ='$username', profilePic ='$profilePic'
+        $sql = "UPDATE users SET username ='$username', profilePic ='$profilePic'
                 WHERE id = " . $me['id'] .";";
 
         if ($conn->query($sql) === TRUE) {
