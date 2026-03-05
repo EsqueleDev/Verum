@@ -208,7 +208,7 @@ body {
 }
 
 /* INPUT BASE */
-.form-group input {
+.form-group input, textarea, select {
     background: var(--on-button);
     border: none;
     padding: 12px;
@@ -1154,6 +1154,10 @@ a{
     justify-content: center;
     align-items: center;
     margin-top: 12px;
+}
+
+.imageNotSelected{
+    border: 3px var(--primary-color) dotted;
 }
 
 @media (max-width: 600px) {

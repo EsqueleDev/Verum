@@ -7,7 +7,7 @@
         $stmt = $conn->prepare("
             SELECT *
             FROM post
-            ORDER BY id DESC
+            ORDER BY postTime DESC
             LIMIT ? OFFSET ?
         ");
         $stmt->bind_param("ii", $limit, $offset);

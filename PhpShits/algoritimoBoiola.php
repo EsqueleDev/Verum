@@ -1,12 +1,15 @@
 <?php
-    function algoritmoDeDadosEspecificos($conn, $userId, $userOrGroup = 'user'){
-        $stmt = $conn->prepare("
-            SELECT *
-            FROM post
-            WHERE userId = ?
-            ORDER BY id DESC
-        ");
-        $stmt->bind_param("i", $userId);
+    function algoritmoDeDadosEspecificos($conn, $somethingId, $userOrGroup = 'user'){
+        if($userOrGroup == 'user'){
+            $stmt = $conn->prepare("
+                SELECT *
+                FROM post
+                WHERE userId = ?
+                ORDER BY id DESC
+            ");
+        }
+        
+        $stmt->bind_param("i", $somethingId);
         $stmt->execute();
 
         $result = $stmt->get_result();
