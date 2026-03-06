@@ -24,28 +24,38 @@
         }
     }
 
-    function getUserLikes($conn, $userId){
-        $likesMap = [
-            1 => 'Arte Digital', 2 => 'Fotografias', 3 => 'Comics', 4 => 'OCS', 5 => 'Fanarts', 6 => 'Pixel Art',
-            7 => 'Webcomic', 8 => 'Naruto', 9 => 'Jujutsu Kaisen', 10 => 'Jojo', 11 => 'My Hero Academy', 12 => 'Bungou Stray Dogs',
-            13 => 'Engraçadinhos', 14 => 'shitpost', 15 => 'Humor Acido',
-            16 => 'Percy Jackson', 17 => 'Book Worm', 18 => 'Mangas', 19 => 'Romances', 20 => 'Biografia', 21 => 'Poesias',
-            22 => 'Minecraft', 23 => 'FNAF', 24 => 'Sims', 25 => 'DND', 26 => 'LOL', 27 => 'Indie',
-            28 => 'Emo', 29 => 'Rap', 30 => 'Kpop', 31 => 'Indie Music', 32 => 'Vocaloid', 33 => 'Pop',
-            34 => 'Arcane', 35 => 'The Own House', 36 => 'TADC', 37 => 'Supernatural', 38 => 'The Office', 39 => 'Animações'
-        ];
-        
-        $stmt = $conn->prepare("SELECT likes_id FROM users_likes WHERE user_id = ?");
+    function getUserLikes($conn, $userId, $lingua = "PT_BR"){
+    
+        $linguasPermitidas = ["PT_BR", "EN", "ES"];
+    
+        if(!in_array($lingua, $linguasPermitidas)){
+            $lingua = "PT_BR";
+        }
+    
+        $colNome = "nome_" . $lingua;
+        $colSub = "subRedditRelacionado" . $lingua;
+    
+        $sql = "
+            SELECT l.$colNome AS nome, l.$colSub AS subreddit
+            FROM users_likes ul
+            JOIN likes l ON ul.likes_id = l.id
+            WHERE ul.user_id = ?
+        ";
+    
+        $stmt = $conn->prepare($sql);
         $stmt->bind_param("i", $userId);
         $stmt->execute();
         $result = $stmt->get_result();
-
+    
         $likes = [];
+    
         while ($row = $result->fetch_assoc()) {
-            if (isset($likesMap[$row['likes_id']])) {
-                $likes[] = $likesMap[$row['likes_id']];
-            }
+            $likes[] = [
+                "nome" => $row["nome"],
+                "subreddit" => $row["subreddit"]
+            ];
         }
+    
         return $likes;
     }
 

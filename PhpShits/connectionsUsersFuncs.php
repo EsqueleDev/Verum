@@ -17,6 +17,7 @@
             return null;
         }
     }
+    
     function sendAFriendRequest($conn, $howSend, $howReceive){
         if(is_null(getUserConnectionInfo($conn, $howSend, $howReceive))){
             $stmt = $conn->prepare("INSERT INTO user_connections (user1, user2, status) VALUES (?, ?, 'pendend')");

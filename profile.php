@@ -6,6 +6,11 @@
 
     $me = getUserInfo($conn, isset($_COOKIE['UserId']) ? $_COOKIE['UserId'] : 0);
     $Profile = getUserInfo($conn, isset($_GET['id']) && is_numeric($_GET['id']) ? $_GET['id'] : ($me ? $me['id'] : 0));
+    
+    function quebrarPalavrasGrandes($texto, $limite = 30) {
+        return preg_replace('/(\S{'.$limite.'})/u', '$1<wbr>', $texto);
+    }
+    
     if(isset($_GET['request']) && $_GET['request'] == 'sended'){
         sendAFriendRequest($conn, $me['id'], $Profile['id']);
         echo "<script>window.location.href = document.referrer;</script>";
@@ -152,7 +157,7 @@
                     <p class="post-text">
                         <h2><?= htmlspecialchars($post['titulo'] ?? '') ?></h2>
                         <?php if($post['tipo'] == 'texto'): ?>
-                            <?= nl2br(htmlspecialchars($post['conteudo'] ?? '')) ?>
+                            <?= nl2br(quebrarPalavrasGrandes(htmlspecialchars($post['conteudo'] ?? ''))) ?>
                         <?php endif; ?>
                     </p>
                     <?php if($post['tipo'] == 'imagem'): ?>
