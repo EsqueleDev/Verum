@@ -13,7 +13,7 @@ function createPushSubscriptionsTable($conn) {
         keys_p256dh VARCHAR(255) NOT NULL,
         keys_auth VARCHAR(255) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
         UNIQUE KEY unique_user_endpoint (user_id, endpoint(255))
     )";
     

@@ -9,7 +9,7 @@
     }
     $me = getUserInfo($conn, $_COOKIE['UserId']);
     function quebrarPalavrasGrandes($texto, $limite = 30) {
-        return preg_replace('/(\S{'.$limite.'})/u', '$1<wbr>', $texto);
+        return preg_replace('/(\S{'.$limite.'})/u', '$1 -<wbr>', $texto);
     }
 ?>
 <!DOCTYPE html>
@@ -58,12 +58,12 @@
                     </div>
                 </div></a>
 
-                <span class="post-text">
-                    <h2><?= htmlspecialchars($post['titulo'] ?? '') ?></h2><br>
+                <p class="post-text">
+                    <h2><?= quebrarPalavrasGrandes(htmlspecialchars($post['titulo'] ?? '')) ?></h2><br>
                     <?php if($post['tipo'] == 'texto'): ?>
                         <?= nl2br(quebrarPalavrasGrandes(htmlspecialchars($post['conteudo'] ?? ''))) ?>
                     <?php endif; ?>
-                </span>
+                </p>
                 <?php if($post['tipo'] == 'imagem'): ?>
                     <img src="<?= htmlspecialchars($post['mediaFile'] ?? '') ?>" onclick="openImageViwer('<?= htmlspecialchars($post['mediaFile'] ?? '') ?>');">
                 <?php endif; ?>
@@ -73,6 +73,20 @@
                         Your browser does not support the video tag.
                     </video>
                 <?php endif; ?>
+                <br>
+                <?php
+                    $tags = explode(',', $post['tagPost']);
+
+                    foreach($tags as $tag){
+                        echo "<span class='tag'>#$tag</span>&nbsp;";
+                    }
+                ?>
+                <?php
+                    if($post['userId'] == $me['id']){
+                        echo "<a href='editPost.php?postId=" . $post['id'] . "'><span class='edit'>Opções do post</span></a>";
+                    }
+                ?>
+                <br>
                 <br>
                 <hr>
             </article>
@@ -104,13 +118,13 @@
                 </div></a>
 
                 <p class="post-text">
-                    <h2><?= htmlspecialchars($post['titulo'] ?? '') ?></h2>
+                    <h2><?= quebrarPalavrasGrandes(htmlspecialchars($post['titulo'] ?? '')) ?></h2>
                     <?php if($post['tipo'] == 'texto'): ?>
-                        <?= nl2br(htmlspecialchars($post['conteudo'] ?? '')) ?>
+                        <?= quebrarPalavrasGrandes(nl2br(htmlspecialchars($post['conteudo'] ?? ''))) ?>
                     <?php endif; ?>
                 </p>
                 <?php if($post['tipo'] == 'imagem'): ?>
-                    <img src="<?= htmlspecialchars($post['mediaFile'] ?? '') ?>">
+                    <img src="<?= htmlspecialchars($post['mediaFile'] ?? '') ?>"><br>
                 <?php endif; ?>
                 <?php if($post['tipo'] == 'video'): ?>
                     <video width="320" height="240" controls>
@@ -118,6 +132,20 @@
                         Your browser does not support the video tag.
                     </video>
                 <?php endif; ?>
+                <br>
+                
+                <?php
+                    $tags = explode(',', $post['tagPost']);
+
+                    foreach($tags as $tag){
+                        echo "<span class='tag'>#$tag</span>&nbsp;";
+                    }
+                ?>
+                <?php
+                    if($post['userId'] == $me['id']){
+                        echo "<a href='editPost.php?postId=" . $post['id'] . "'><span class='edit'>Opções do post</span></a>";
+                    }
+                ?>
             </article>
             <hr>
         <?php endforeach ?>
@@ -153,12 +181,9 @@
 </div>
 <script>
     let currentPage = 3; // Start from page 1
-    let hasMoreVerum = true;
-    let hasMoreReddit = true;
-    let recentSubreddits = [];
-    let usedPostIds = new Set();
-    let isLoadingPosts = false;
-    let isLoadingReddit = false;
+    let isLoading = false;
+    let hasMore = true;
+
     const loadMoreBtn = document.getElementById('load-more-btn');
     const loadingIndicator = document.getElementById('loading-indicator');
     const feed = document.querySelector('.feed');
@@ -176,8 +201,15 @@
         }
 
         let contentHTML = '';
+        let tagsContainer = '';
         if (post.tipo === 'texto' && post.conteudo) {
-            contentHTML = breakLongWords(post.conteudo);
+            contentHTML = post.conteudo;
+        }
+
+        if (post.tags && Array.isArray(post.tags)) {
+            post.tags.forEach(tag => {
+                tagsContainer += `<span class='tag'>${tag}</span>`;
+            });
         }
 
         const profilePic = post.user?.profilePic || '';
@@ -193,265 +225,137 @@
                         <span>${post.postTime || ''}</span>
                     </div>
                 </div></a>
-                <p class="post-text">
+                <span class="post-text">
                     <h2>${post.titulo || ''}</h2>
                     ${contentHTML}
-                </p>
+                </span><br>
                 ${mediaHTML}
+                ${tagsContainer}
+            </article>
+            
+        `;
+    }
+    
+    function createPostRedditHTML(post, comunidade) {
+        const profilePic = 'https://redditinc.com/hs-fs/hubfs/Reddit%20Inc/Content/Brand%20Page/Reddit_Logo.png';
+        const username = post.author || 'Usuário do reddit';
+        const anexo = post.imagemAnexo ? `<img src="${post.imagemAnexo}">` : '';
+        return `
+            <hr>
+            <article class="post-card">
+                <a href='https://www.reddit.com/user/${username}'><div class="post-header">
+                    <div class="avatar" style="background: url(${profilePic}); background-repeat: no-repeat; background-size: cover;"></div>
+                    <div class="post-user">
+                        <strong>${username} do Reddit</strong>
+                        <span>Algo acontecendo na comunidade ${comunidade}</span>
+                    </div>
+                </div></a>
+                <p class="post-text">
+                    <h2>${post.titulo || ''}</h2>
+                    ${post.conteudo}
+                </p>
+                ${anexo}
             </article>
             
         `;
     }
 
-    function breakLongWords(text, limit = 40){
-        return text.replace(new RegExp(`(\\S{${limit}})`, "g"), "$1\u200B");
-    }
-
-    function createRedditPostHTML(post) {
-        const profilePic = '';
-        const username = post.data.author || 'Usuário do Reddit';
-    
-        let image = '';
-    
-        if (post.data.preview && post.data.preview.images) {
-            image = `<img src="${post.data.preview.images[0].source.url}" style="max-width:100%">`;
-        }
-    
-        return `
-            <hr>
-            <article class="post-card">
-                <a href="${post.data.url}">
-                    <div class="post-header">
-                        <div class="avatar" style="background:url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTE9W4qKeBxK3fL5-W4X70x2IwLYATQeCwt1A&s); background-size:cover;"></div>
-                        <div class="post-user">
-                            <strong>${username}</strong>
-                            <span>Oque esta acontecendo no Reddit agora</span>
-                        </div>
-                    </div>
-                
-    
-                <p class="post-text">
-                    <h2>${post.data.title || ''}</h2>
-                    ${renderText(post.data.selftext || '')}
-                </p>
-    
-                ${image}
-            </a></article>
-        `;
-    }
-
     // Load more posts function
     async function loadMorePosts() {
-    
-        if (isLoadingPosts) return;
-    
-        isLoadingPosts = true;
+        if (isLoading || !hasMore) return;
+
+        isLoading = true;
         loadMoreBtn.style.display = 'none';
         loadingIndicator.style.display = 'flex';
-    
+
         try {
-    
-            if (hasMoreVerum) {
-    
-                const response = await fetch(`get_posts.php?page=${currentPage}&limit=4`);
-                const data = await response.json();
-    
-                if (data.success && data.posts.length > 0) {
-    
-                    const loadMoreContainer = document.getElementById('load-more-container');
-    
-                    data.posts.forEach(post => {
-                        const postHTML = createPostHTML(post);
-                        loadMoreContainer.insertAdjacentHTML('beforebegin', postHTML);
-                    });
-    
-                    currentPage++;
-                    hasMoreVerum = data.hasMore;
-    
-                    // depois dos posts do Verum, carrega Reddit
-                    await loadRedditPosts(3);
-    
+            const response = await fetch(`get_posts.php?page=${currentPage}&limit=3`);
+            const data = await response.json();
+
+            if (data.success && data.posts.length > 0) {
+                // Insert posts before the load more container
+                const loadMoreContainer = document.getElementById('load-more-container');
+                
+                data.posts.forEach(post => {
+                    const postHTML = createPostHTML(post);
+                    loadMoreContainer.insertAdjacentHTML('beforebegin', postHTML);
+                });
+
+                hasMore = data.hasMore;
+                currentPage++;
+                await loadRedditPost();
+                if (hasMore) {
+                    loadMoreBtn.style.display = 'block';
                 } else {
-    
-                    hasMoreVerum = false;
-    
-                    // se não houver mais Verum → só Reddit
-                    await loadRedditPosts(4);
+                    loadMoreContainer.style.display = 'none';
                 }
-    
             } else {
-    
-                // apenas Reddit
-                await loadRedditPosts(4);
-    
-            }
-    
-        } catch (error) {
-    
-            console.error('Error loading posts:', error);
-            loadMoreBtn.style.display = 'block';
-    
-        } finally {
-    
-            isLoadingPosts = false;
-            loadingIndicator.style.display = 'none';
-    
-            if (hasMoreVerum || hasMoreReddit) {
-                loadMoreBtn.style.display = 'block';
-            } else {
+                hasMore = false;
                 document.getElementById('load-more-container').style.display = 'none';
             }
-        }
-    }
-    
-    function renderText(text) {
-    
-        // negrito **texto**
-        text = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-    
-        // links [texto](url)
-        text = text.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>');
-    
-        // listas "- item"
-        text = text.replace(/^- (.*)$/gm, "<li>$1</li>");
-    
-        // transformar blocos de li em ul
-        text = text.replace(/(<li>.*<\/li>)/gs, "<ul>$1</ul>");
-    
-        // quebra de linha
-        text = text.replace(/\n/g, "<br>");
-    
-        return text;
-    }
-    
-    let redditAfter = null;
-
-    async function loadRedditPosts(qtd = 1){
-    
-        if (isLoadingReddit || !hasMoreReddit) return;
-    
-        isLoadingReddit = true;
-    
-        let added = 0;
-        let attempts = 0;
-        const MAX_ATTEMPTS = qtd * 10;
-    
-        try {
-    
-            while (added < qtd && attempts < MAX_ATTEMPTS){
-    
-                attempts++;
-    
-                let url = "reddit_cache.php";
-    
-                if (redditAfter){
-                    url += "?after=" + redditAfter;
-                }
-    
-                const response = await fetch(url);
-                const data = await response.json();
-    
-                if(!data || !data.data){
-                    hasMoreReddit = false;
-                    break;
-                }
-    
-                const posts = data.data.children;
-    
-                if(!posts || posts.length === 0){
-                    hasMoreReddit = false;
-                    break;
-                }
-    
-                const post = posts[0];
-                const subreddit = post.data.subreddit;
-                const postId = post.data.id;
-    
-                // atualizar cursor
-                redditAfter = data.data.after;
-    
-                if(!redditAfter){
-                    hasMoreReddit = false;
-                }
-    
-                // ignorar nsfw
-                if(post.data.over_18) continue;
-    
-                // evitar post repetido
-                if(usedPostIds.has(postId)) continue;
-    
-                // evitar subreddit repetido
-                if(recentSubreddits.includes(subreddit)) continue;
-    
-                usedPostIds.add(postId);
-    
-                recentSubreddits.push(subreddit);
-    
-                if(recentSubreddits.length > 3){
-                    recentSubreddits.shift();
-                }
-    
-                const postHTML = createRedditPostHTML(post);
-    
-                document
-                    .getElementById('load-more-container')
-                    .insertAdjacentHTML('beforebegin', postHTML);
-    
-                added++;
-            }
-    
-            // fallback caso nenhuma regra permita adicionar
-            if(added === 0 && attempts >= MAX_ATTEMPTS){
-    
-                console.log("Fallback Reddit");
-    
-                let url = "reddit_cache.php";
-    
-                const response = await fetch(url);
-                const data = await response.json();
-    
-                const post = data.data.children[0];
-    
-                if(post){
-                    const postHTML = createRedditPostHTML(post);
-    
-                    document
-                        .getElementById('load-more-container')
-                        .insertAdjacentHTML('beforebegin', postHTML);
-                }
-            }
-    
-        } catch (error){
-    
-            console.error('Error loading Reddit:', error);
-    
+        } catch (error) {
+            console.error('Error loading posts:', error);
+            loadMoreBtn.style.display = 'block';
         } finally {
-    
-            isLoadingReddit = false;
+            isLoading = false;
+            loadingIndicator.style.display = 'none';
         }
     }
 
     // Add click event to load more button
     loadMoreBtn.addEventListener('click', loadMorePosts);
 
-    let scrollCooldown = false;
-
+    async function loadRedditPost(){
+    
+        try{
+        
+            let subreddits = [
+            <?php
+            $gostos = getUserLikes($conn, $_COOKIE['UserId']);
+            
+            $i = 0;
+            foreach ($gostos as $gosto){
+            
+                $sub = str_replace("r/", "", $gosto['subreddit']);
+            
+                if($i > 0) echo ",";
+                echo "'".$sub."'";
+                $i++;
+            }
+            ?>
+            ];
+        
+            const randomSub = subreddits[Math.floor(Math.random() * subreddits.length)];
+        
+            const response = await fetch(`reddit_cache.php?sub=${randomSub}`);
+            const data = await response.json();
+        
+            if(data.posts && data.posts.length){
+        
+                const loadMoreContainer = document.getElementById('load-more-container');
+        
+                data.posts.forEach(post=>{
+                    const postHTML = createPostRedditHTML(post, randomSub);
+                    loadMoreContainer.insertAdjacentHTML('beforebegin', postHTML);
+                });
+        
+            }
+        
+        }catch(error){
+            console.error("Reddit error:", error);
+        }
+    
+    }
+    // Optional: Infinite scroll - load more when near bottom
     window.addEventListener('scroll', () => {
-    
-        if (scrollCooldown || isLoadingPosts) return;
-    
+        if (isLoading || !hasMore) return;
+        
         const scrollPosition = window.innerHeight + window.scrollY;
         const pageHeight = document.documentElement.scrollHeight;
-    
-        if (pageHeight - scrollPosition < 300) {
-    
-            scrollCooldown = true;
-    
-            loadMorePosts().finally(() => {
-                setTimeout(() => {
-                    scrollCooldown = false;
-                }, 500);
-            });
+        
+        // Load more when user is 200px from bottom
+        if (pageHeight - scrollPosition < 200) {
+            loadMorePosts();
         }
     });
 </script>
@@ -544,7 +448,7 @@ imagemVisu.addEventListener("touchmove", dragMove, { passive: false });
 imagemVisu.addEventListener("touchend", endDrag);
 </script>
 <!-- macumba pra notificações baitolass yay -->
-<!-- sistema de notificações desabilitado para testes<script src="push-notifications.js"></script>
+<script src="push-notifications.js"></script>
 <script>
 // Register service worker for push notifications
 if ('serviceWorker' in navigator) {
@@ -663,7 +567,7 @@ document.addEventListener('visibilitychange', () => {
         }, 30000);
     }
 });
-</script> -->
+</script>
 <div class='SideBarConteiner' id='SideBar'>
     <?php include('sideBar.php'); ?>
     <div class="closeSideBar" onclick='closeSideBar()'>

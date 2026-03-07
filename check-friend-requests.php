@@ -3,6 +3,10 @@
  * API Endpoint: Check for New Friend Requests
  */
 
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 header('Content-Type: application/json');
 include 'PhpShits/conn.php';
 include 'PhpShits/userFunctions.php';
@@ -26,7 +30,7 @@ if (!$columnExists) {
 
 // Get pending friend requests that haven't been shown as notification
 $stmt = $conn->prepare("
-    SELECT uc.id, uc.user1, u.username, u.profilePic, uc.created_at
+    SELECT uc.id, uc.user1, u.username, u.profilePic
     FROM user_connections uc
     JOIN users u ON uc.user1 = u.id
     WHERE uc.user2 = ? AND uc.status = 'pendend' AND (uc.notification_shown = 0 OR uc.notification_shown IS NULL)
@@ -43,8 +47,7 @@ while ($row = $result->fetch_assoc()) {
         'id' => $row['id'],
         'userId' => $row['user1'],
         'username' => $row['username'],
-        'profilePic' => $row['profilePic'],
-        'timestamp' => strtotime($row['created_at'])
+        'profilePic' => $row['profilePic']
     ];
 }
 

@@ -8,6 +8,14 @@
                 ORDER BY id DESC
             ");
         }
+        else if($userOrGroup == 'group'){
+            $stmt = $conn->prepare("
+                SELECT *
+                FROM post
+                WHERE grupoReferencia = ?
+                ORDER BY id DESC
+            ");
+        }
         
         $stmt->bind_param("i", $somethingId);
         $stmt->execute();
@@ -23,4 +31,19 @@
         return $posts;
     }
 
+    function getOnePost($conn, $postId){
+
+        $stmt = $conn->prepare("
+            SELECT *
+            FROM post
+            WHERE id = ?
+        ");
+        
+        $stmt->bind_param("i", $postId);
+        $stmt->execute();
+
+        $result = $stmt->get_result();
+
+        return $post;
+    }
 ?>

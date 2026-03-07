@@ -3,7 +3,9 @@
  * Save Push Subscription Endpoint
  * Receives push subscription data from client and saves to database
  */
-
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 header('Content-Type: application/json');
 include 'PhpShits/conn.php';
 include 'PhpShits/pushNotificationFuncs.php';

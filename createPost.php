@@ -37,7 +37,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // ------------------------------------------------
     // 3. PROCESSAR CONFORME TIPO DE POST
     // ------------------------------------------------
+    $tags = $_POST['tags'] ?? '';
     
+    $tags_array = explode(',', $tags);
+    $tags_array = array_map('trim', $tags_array);
+    $tags_array = array_map('strtolower', $tags_array);
+    $tags_array = array_unique($tags_array);
+    
+    $tags = implode(',', $tags_array);
     if ($post_type === 'texto') {
         // Post de texto - capturar corpo
         $post_body = trim($_POST['post_content_text'] ?? '');
@@ -93,13 +100,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // ------------------------------------------------
     
     if (!$post_error && $conn) {
-        $stmt = $conn->prepare("INSERT INTO post (userId, tipo, titulo, conteudo, mediaFile) VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("issss", 
+        $stmt = $conn->prepare("INSERT INTO post (userId, tipo, titulo, conteudo, mediaFile, tagPost) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("isssss", 
             $post_data['user_id'],
             $post_data['type'],
             $post_data['title'],
             $post_data['body'],
-            $post_data['media_path']
+            $post_data['media_path'],
+            $tags
         );
         if ($stmt->execute()) {
             $post_processed = true;
@@ -257,7 +265,7 @@ function processMediaUpload($file, $upload_dir, $allowed_types, $max_size) {
     </script>
 </head>
 <body>
-
+<div class='hideMobile'></div>
 <div class="app-container">
 
     <!-- HEADER -->
@@ -335,15 +343,79 @@ function processMediaUpload($file, $upload_dir, $allowed_types, $max_size) {
                     <button type="button" class="remove-media" onclick="removeVideoPreview();">×</button>
                 </div>
             </div>
+            <br>
+            <div class="tag-box form-group">
+                <input 
+                    type="text" 
+                    id="tag-input"
+                    placeholder="Digite uma tag e aperte ENTER"
+                >
+            
+                <div id="tags-container"></div>
+            
+                <input type="hidden" name="tags" id="tags-hidden">
+            </div>
         </div>
-    </post>
-
-    <!-- BOTÃO FIXO -->
-    <div class="post-footer">
-        <button type="submit" class="btn btn-primary">Publicar</button>
-    </div>
-
+        <br>
+    
+        <!-- BOTÃO FIXO -->
+        <div class="post-footer">
+            <button type="submit" class="btn btn-primary">Publicar</button>
+        </div>
+    </form>
 </div>
 <script src="create-post.js"></script>
+<script>
+    let tags = [];
+    
+    const input = document.getElementById("tag-input");
+    const container = document.getElementById("tags-container");
+    const hidden = document.getElementById("tags-hidden");
+    
+    input.addEventListener("keydown", function(e){
+    
+        if(e.key === "Enter"){
+            e.preventDefault();
+    
+            let tag = input.value.trim().toLowerCase();
+    
+            if(tag === "") return;
+    
+            tag = tag.replace(/\s+/g, "");
+    
+            if(tags.includes(tag)) return;
+    
+            tags.push(tag);
+    
+            createTag(tag);
+    
+            input.value = "";
+    
+            hidden.value = tags.join(",");
+        }
+    
+    });
+    
+    function createTag(tag){
+    
+        const div = document.createElement("div");
+        div.className = "tag";
+        div.innerText = "#"+tag;
+    
+        const remove = document.createElement("span");
+        remove.innerText = " ×";
+    
+        remove.onclick = function(){
+    
+            tags = tags.filter(t => t !== tag);
+            div.remove();
+    
+            hidden.value = tags.join(",");
+        }
+    
+        div.appendChild(remove);
+        container.appendChild(div);
+    }
+</script>
 </body>
 </html>

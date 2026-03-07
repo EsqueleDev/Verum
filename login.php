@@ -6,7 +6,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'];
     $password = $_POST['password']; // senha em texto puro
 
-    $stmt = $conn->prepare("SELECT id, userAuthId, password FROM user WHERE username = ?");
+    $stmt = $conn->prepare("SELECT id, userAuthId, password FROM users WHERE username = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();

@@ -1,11 +1,17 @@
 <?php
+    /*
+        SELECT * FROM post
+        WHERE tagsPost LIKE '%arte%'
+    */
     header('Content-Type: application/json');
     
     include 'PhpShits/conn.php';
     include 'PhpShits/userFunctions.php';
     include 'PhpShits/algoritimoBoiola.php';
     include 'PhpShits/algoritimoMACHO.php';
-
+    function quebrarPalavrasGrandes($texto, $limite = 30) {
+        return preg_replace('/(\S{'.$limite.'})/u', '$1 -<wbr>', $texto);
+    }
     // Get the page number from the request
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
     $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 3;
@@ -29,6 +35,15 @@
             'username' => $user['username'],
             'profilePic' => $user['profilePic']
         ];
+        $tags = explode(',', $post['tagPost']);
+        
+        foreach($tags as $tag){
+            $post['tags'][] = [$tag];
+        }
+        if($post['userId'] == $userId){
+            $post['myPost'] = true;
+        }
+        $post['conteudo'] = quebrarPalavrasGrandes($post['conteudo']);
         $postsWithUsers[] = $post;
     }
     
