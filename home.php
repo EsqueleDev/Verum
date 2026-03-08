@@ -76,9 +76,10 @@
                 <br>
                 <?php
                     $tags = explode(',', $post['tagPost']);
-
-                    foreach($tags as $tag){
-                        echo "<span class='tag'>#$tag</span>&nbsp;";
+                    if($tags[0] != 0){
+                        foreach($tags as $tag){
+                            echo "<span class='tag'>#$tag</span>&nbsp;";
+                        }
                     }
                 ?>
                 <?php
@@ -133,12 +134,12 @@
                     </video>
                 <?php endif; ?>
                 <br>
-                
                 <?php
                     $tags = explode(',', $post['tagPost']);
-
-                    foreach($tags as $tag){
-                        echo "<span class='tag'>#$tag</span>&nbsp;";
+                    if($tags[0] != 0){
+                        foreach($tags as $tag){
+                            echo "<span class='tag'>#$tag</span>&nbsp;";
+                        }
                     }
                 ?>
                 <?php
@@ -206,10 +207,14 @@
             contentHTML = post.conteudo;
         }
 
-        if (post.tags && Array.isArray(post.tags)) {
+        if (post.tags && Array.isArray(post.tags) && post.tags[0] != 0) {
             post.tags.forEach(tag => {
                 tagsContainer += `<span class='tag'>${tag}</span>`;
             });
+        }
+        
+        if(post.myPost == true){
+            editContainer = `<a href='editPost.php?postId=${post.id}'><span class='edit'>Opções do post</span></a>` ;
         }
 
         const profilePic = post.user?.profilePic || '';
@@ -231,6 +236,7 @@
                 </span><br>
                 ${mediaHTML}
                 ${tagsContainer}
+                ${editContainer}
             </article>
             
         `;

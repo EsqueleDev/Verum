@@ -32,7 +32,7 @@
     }
 
     function getOnePost($conn, $postId){
-
+    
         $stmt = $conn->prepare("
             SELECT *
             FROM post
@@ -41,9 +41,11 @@
         
         $stmt->bind_param("i", $postId);
         $stmt->execute();
-
+    
         $result = $stmt->get_result();
-
+    
+        $post = $result->fetch_assoc(); // pega UMA linha
+    
         return $post;
     }
 ?>

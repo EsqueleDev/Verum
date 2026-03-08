@@ -169,6 +169,20 @@
                             Your browser does not support the video tag.
                         </video>
                     <?php endif; ?>
+                    <br>
+                    <?php
+                        $tags = explode(',', $post['tagPost']);
+                        if($tags[0] != 0){
+                            foreach($tags as $tag){
+                                echo "<span class='tag'>#$tag</span>&nbsp;";
+                            }
+                        }
+                    ?>
+                    <?php
+                        if($post['userId'] == $me['id']){
+                            echo "<a href='editPost.php?postId=" . $post['id'] . "'><span class='edit'>Opções do post</span></a>";
+                        }
+                    ?>
                 </article>
                 <br>
                 <hr>
@@ -247,7 +261,7 @@
                     <div class="likes-container">
                         <?php if (count($userLikes) > 0): ?> 
                             <?php foreach($userLikes as $like): ?>
-                                <span class="like-chip"><?= htmlspecialchars($like) ?></span>
+                                <span class="like-chip"><?= htmlspecialchars($like['nome']) ?></span>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <p style="padding: 16px; text-align: center; color: var(--on-surface);">

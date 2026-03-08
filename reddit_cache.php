@@ -11,6 +11,10 @@ if(!is_dir($cacheDir)){
     mkdir($cacheDir, 0777, true);
 }
 
+function quebrarPalavrasGrandes($texto, $limite = 30) {
+    return preg_replace('/(\S{'.$limite.'})/u', '$1 -<wbr>', $texto);
+}
+
 if(file_exists($cacheFile) && (time() - filemtime($cacheFile)) < $cacheTime){
     echo file_get_contents($cacheFile);
     exit;
@@ -59,9 +63,9 @@ while($tentativas < 10){
         $redditPost = [
             "posts" => [[
                 "titulo" => $post['title'],
-                "conteudo" => $post['selftext_html'] ?? '',
+                "conteudo" => quebrarPalavrasGrandes($post['selftext_html']) ?? '',
                 "url" => $post['url'],
-                "imagemAnexo" => $post['preview']['images'][0]['source']['url'] ?? $post['url'],
+                "imagemAnexo" => $post['preview']['images'][0]['source']['url'],
                 "author" => $post['author']
             ]]
         ];
