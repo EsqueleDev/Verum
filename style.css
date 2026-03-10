@@ -209,19 +209,29 @@ body {
 
 /* INPUT BASE */
 .form-group input, textarea, select {
-    background: var(--on-button);
-    border: none;
+    border: 1px var(--on-button) solid;
+    background: var(--button);
     padding: 12px;
     border-radius: 8px;
     font-size: 14px;
     outline: none;
     transition: 0.2s;
+    color: var(--on-div);
 }
 
 /* FOCO */
 .form-group input:focus {
+    color: var(--div);
     background: var(--on-div);
     box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.form-group input:focus::placeholder{
+    color: var(--div);
+}
+
+.form-group input::placeholder{
+    color: var(--on-div);
 }
 
 /* FOOTER FIXO */
