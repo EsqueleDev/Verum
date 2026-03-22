@@ -23,6 +23,19 @@
             return null;
         }
     }
+    
+    function checkIfSecureIdIsCorect($conn, $userId, $userAuthId){
+        $stmt = $conn->prepare("SELECT * FROM users WHERE id = ? AND userAuthId = ?");
+        $stmt->bind_param("ii", $userId, $userAuthId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows === 1) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     function getUserLikes($conn, $userId, $lingua = "PT_BR"){
     

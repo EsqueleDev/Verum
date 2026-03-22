@@ -1,8 +1,12 @@
 <?php
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
     include 'PhpShits/conn.php';
     include 'PhpShits/userFunctions.php';
     include 'PhpShits/connectionsUsersFuncs.php';
     include 'PhpShits/algoritimoMACHO.php';
+    include 'PhpShits/funcsTags.php';
     if (!isset($_COOKIE['UserId'])) {
         header("Location: index.php");
         exit;
@@ -18,7 +22,7 @@
     <meta charset="UTF-8">
     <title>Verum - Feed</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css?id=1">
+    <link rel="stylesheet" href="style.css?id=3">
     <link rel="stylesheet" href="colors.php">
     <link rel="manifest" href="manifest.json" />
     <!-- ios support -->
@@ -32,7 +36,7 @@
     <a href='#'><div class='SideBarContent hideMobile'><svg xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#e3e3e3"><path d="M792-120.67 532.67-380q-30 25.33-69.67 39.67Q423.33-326 378.67-326q-108.34 0-183.5-75.17Q120-476.33 120-583.33t75.17-182.17q75.16-75.17 182.83-75.17 107 0 181.83 75.17 74.84 75.17 74.84 182.17 0 43.33-14 83-14 39.66-40.67 73l260 258.66-48 48Zm-414-272q79 0 134.5-55.83T568-583.33q0-79-55.5-134.84Q457-774 378-774q-79.67 0-135.5 55.83-55.83 55.84-55.83 134.84T242.5-448.5q55.83 55.83 135.5 55.83Z"/></svg><h3>Buscar</h3></div></a>
     <a href='#'><div class='SideBarContent hideMobile'><svg xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#e3e3e3"><path d="M240-399.33h315.33V-466H240v66.67ZM240-526h480v-66.67H240V-526Zm0-126.67h480v-66.66H240v66.66ZM80-80v-733.33q0-27 19.83-46.84Q119.67-880 146.67-880h666.66q27 0 46.84 19.83Q880-840.33 880-813.33v506.66q0 27-19.83 46.84Q840.33-240 813.33-240H240L80-80Zm131.33-226.67h602v-506.66H146.67v575l64.66-68.34Zm-64.66 0v-506.66 506.66Z"/></svg><h3>Conversas</h3></div></a>
     <a href='#'><div class='SideBarContent hideMobile'><svg xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#e3e3e3"><path d="m382-80-18.67-126.67q-17-6.33-34.83-16.66-17.83-10.34-32.17-21.67L178-192.33 79.33-365l106.34-78.67q-1.67-8.33-2-18.16-.34-9.84-.34-18.17 0-8.33.34-18.17.33-9.83 2-18.16L79.33-595 178-767.67 296.33-715q14.34-11.33 32.34-21.67 18-10.33 34.66-16L382-880h196l18.67 126.67q17 6.33 35.16 16.33 18.17 10 31.84 22L782-767.67 880.67-595l-106.34 77.33q1.67 9 2 18.84.34 9.83.34 18.83 0 9-.34 18.5Q776-452 774-443l106.33 78-98.66 172.67-118-52.67q-14.34 11.33-32 22-17.67 10.67-35 16.33L578-80H382Zm55.33-66.67h85l14-110q32.34-8 60.84-24.5T649-321l103.67 44.33 39.66-70.66L701-415q4.33-16 6.67-32.17Q710-463.33 710-480q0-16.67-2-32.83-2-16.17-7-32.17l91.33-67.67-39.66-70.66L649-638.67q-22.67-25-50.83-41.83-28.17-16.83-61.84-22.83l-13.66-110h-85l-14 110q-33 7.33-61.5 23.83T311-639l-103.67-44.33-39.66 70.66L259-545.33Q254.67-529 252.33-513 250-497 250-480q0 16.67 2.33 32.67 2.34 16 6.67 32.33l-91.33 67.67 39.66 70.66L311-321.33q23.33 23.66 51.83 40.16 28.5 16.5 60.84 24.5l13.66 110Zm43.34-200q55.33 0 94.33-39T614-480q0-55.33-39-94.33t-94.33-39q-55.67 0-94.5 39-38.84 39-38.84 94.33t38.84 94.33q38.83 39 94.5 39ZM480-480Z"/></svg><h3>Configurações</h3></div></a>
-    <a href='#'><div class='SideBarContent hideMobile'><img src='<?= $me['profilePic'] ?>' style='max-width: 36px; height: 36px; border-radius: 50%;'><h3><?= $me['username'] ?></h3></div></a>
+    <a href='#'><div class='SideBarContent hideMobile'><img src='<?= $me['profilePic'] ?>' loading="lazy" style='max-width: 36px; height: 36px; border-radius: 50%;'><h3><?= $me['username'] ?></h3></div></a>
 </div>
 <div class="app-container">
 
@@ -49,14 +53,25 @@
         <!-- POST -->
         <?php $posts = algoritmoGeralSite($conn, $me['id'], 1, 3); ?>
         <?php foreach($posts as $post): ?>
+            <?php
+                if($post['userId'] == $me['id']){
+                    $isMine = 'true';
+                }
+                else{
+                    $isMine = 'false';
+                }
+            ?>
             <article class="post-card">
-                <a href='profile.php?id=<?= $post['userId'] ?>'><div class="post-header" style='margin-bottom: 12px;'>
+                <div class="post-header" style='margin-bottom: 12px;'><a href='profile.php?id=<?= $post['userId'] ?>'>
                     <div class="avatar" style="background: url(<?= htmlspecialchars($post['user']['profilePic'] ?? '') ?>); background-repeat: no-repeat; background-size: cover;"></div>
                     <div class="post-user">
                         <strong><?= htmlspecialchars($post['user']['username'] ?? 'Usuário') ?></strong>
                         <span><?= htmlspecialchars($post['postTime'] ?? '') ?></span>
-                    </div>
-                </div></a>
+                    </div></a>
+                    <a href='postOptions.php?postid=<?= $post['id'] ?>&isMine=<?= $isMine ?>' class='post-options-button'>
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--on-background)"><path d="M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z"/></svg>
+                    </a>
+                </div>
 
                 <p class="post-text">
                     <h2><?= quebrarPalavrasGrandes(htmlspecialchars($post['titulo'] ?? '')) ?></h2><br>
@@ -65,7 +80,7 @@
                     <?php endif; ?>
                 </p>
                 <?php if($post['tipo'] == 'imagem'): ?>
-                    <img src="<?= htmlspecialchars($post['mediaFile'] ?? '') ?>" onclick="openImageViwer('<?= htmlspecialchars($post['mediaFile'] ?? '') ?>');">
+                    <img src="<?= htmlspecialchars($post['mediaFile'] ?? '') ?>" onclick="openImageViwer('<?= htmlspecialchars($post['mediaFile'] ?? '') ?>');" loading="lazy" >
                 <?php endif; ?>
                 <?php if($post['tipo'] == 'video'): ?>
                     <video width="320" height="240" controls>
@@ -74,23 +89,22 @@
                     </video>
                 <?php endif; ?>
                 <br>
+                <div class='tag-box'>
                 <?php
-                    $tags = explode(',', $post['tagPost']);
-                    if($tags[0] != 0){
-                        foreach($tags as $tag){
-                            echo "<span class='tag'>#$tag</span>&nbsp;";
-                        }
+                $tags = explode(',', $post['tagPost']);
+                
+                if(!empty($tags) && $tags[0] != 0){
+                    foreach($tags as $tagId){
+                        $tagName = getTagName($conn, (int)$tagId, "PT_BR");
+                        echo "<span class='tag'>#$tagName</span>";
                     }
+                }
                 ?>
-                <?php
-                    if($post['userId'] == $me['id']){
-                        echo "<a href='editPost.php?postId=" . $post['id'] . "'><span class='edit'>Opções do post</span></a>";
-                    }
-                ?>
+                </div>
                 <br>
                 <br>
-                <hr>
-            </article>
+            </article> 
+            <hr>
         <?php endforeach ?>
         <!-- SUGESTÕES -->
         <?php $randUsers = getLastUsersToEnterWebsite($conn, 1) ?>
@@ -109,23 +123,34 @@
         <hr>
         <?php $posts = algoritmoGeralSite($conn, $me['id'], 2, 3); ?>
         <?php foreach($posts as $post): ?>
+            <?php
+                if($post['userId'] == $me['id']){
+                    $isMine = 'true';
+                }
+                else{
+                    $isMine = 'false';
+                }
+            ?>
             <article class="post-card">
-                <a href='profile.php?id=<?= $post['userId'] ?>'><div class="post-header">
+                <div class="post-header" style='margin-bottom: 12px;'><a href='profile.php?id=<?= $post['userId'] ?>'>
                     <div class="avatar" style="background: url(<?= htmlspecialchars($post['user']['profilePic'] ?? '') ?>); background-repeat: no-repeat; background-size: cover;"></div>
                     <div class="post-user">
                         <strong><?= htmlspecialchars($post['user']['username'] ?? 'Usuário') ?></strong>
                         <span><?= htmlspecialchars($post['postTime'] ?? '') ?></span>
-                    </div>
-                </div></a>
+                    </div></a>
+                    <a href='postOptions.php?postid=<?= $post['id'] ?>&isMine=<?= $isMine ?>' class='post-options-button'>
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--on-background)"><path d="M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z"/></svg>
+                    </a>
+                </div>
 
                 <p class="post-text">
-                    <h2><?= quebrarPalavrasGrandes(htmlspecialchars($post['titulo'] ?? '')) ?></h2>
+                    <h2><?= quebrarPalavrasGrandes(htmlspecialchars($post['titulo'] ?? '')) ?></h2><br>
                     <?php if($post['tipo'] == 'texto'): ?>
-                        <?= quebrarPalavrasGrandes(nl2br(htmlspecialchars($post['conteudo'] ?? ''))) ?>
+                        <?= nl2br(quebrarPalavrasGrandes(htmlspecialchars($post['conteudo'] ?? ''))) ?>
                     <?php endif; ?>
                 </p>
                 <?php if($post['tipo'] == 'imagem'): ?>
-                    <img src="<?= htmlspecialchars($post['mediaFile'] ?? '') ?>"><br>
+                    <img src="<?= htmlspecialchars($post['mediaFile'] ?? '') ?>" onclick="openImageViwer('<?= htmlspecialchars($post['mediaFile'] ?? '') ?>');" loading="lazy" >
                 <?php endif; ?>
                 <?php if($post['tipo'] == 'video'): ?>
                     <video width="320" height="240" controls>
@@ -134,20 +159,21 @@
                     </video>
                 <?php endif; ?>
                 <br>
+                <div class='tag-box'>
                 <?php
-                    $tags = explode(',', $post['tagPost']);
-                    if($tags[0] != 0){
-                        foreach($tags as $tag){
-                            echo "<span class='tag'>#$tag</span>&nbsp;";
-                        }
+                $tags = explode(',', $post['tagPost']);
+                
+                if(!empty($tags) && $tags[0] != 0){
+                    foreach($tags as $tagId){
+                        $tagName = getTagName($conn, (int)$tagId, "PT_BR");
+                        echo "<span class='tag'>#$tagName</span>";
                     }
+                }
                 ?>
-                <?php
-                    if($post['userId'] == $me['id']){
-                        echo "<a href='editPost.php?postId=" . $post['id'] . "'><span class='edit'>Opções do post</span></a>";
-                    }
-                ?>
-            </article>
+                </div>
+                <br>
+                <br>
+            </article> 
             <hr>
         <?php endforeach ?>
         <article class="post-card">
@@ -171,7 +197,7 @@
     <?php if(checkNewRequests($conn, $me['id'])): ?>
         <a href="inbox.php"><button class="new-notification-button"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--div)"><path d="M480-80q-33 0-56.5-23.5T400-160h160q0 33-23.5 56.5T480-80Zm0-420ZM160-200v-80h80v-280q0-83 50-147.5T420-792v-28q0-25 17.5-42.5T480-880q25 0 42.5 17.5T540-820v13q-11 22-16 45t-4 47q-10-2-19.5-3.5T480-720q-66 0-113 47t-47 113v280h320v-257q18 8 38.5 12.5T720-520v240h80v80H160Zm475-435q-35-35-35-85t35-85q35-35 85-35t85 35q35 35 35 85t-35 85q-35 35-85 35t-85-35Z"/></svg></button></a>
     <?php endif; ?>
-    <a href='newPost'><button class="new-post-button hidePC"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--div)"><path d="m490-527 37 37 217-217-37-37-217 217ZM200-200h37l233-233-37-37-233 233v37Zm355-205L405-555l167-167-29-29-219 219-56-56 218-219q24-24 56.5-24t56.5 24l29 29 50-50q12-12 28.5-12t28.5 12l93 93q12 12 12 28.5T828-678L555-405ZM270-120H120v-150l285-285 150 150-285 285Z"/></svg></button></a>
+    <button class="new-post-button hidePC" onclick='redirectNewPost(event)'><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--div)"><path d="m490-527 37 37 217-217-37-37-217 217ZM200-200h37l233-233-37-37-233 233v37Zm355-205L405-555l167-167-29-29-219 219-56-56 218-219q24-24 56.5-24t56.5 24l29 29 50-50q12-12 28.5-12t28.5 12l93 93q12 12 12 28.5T828-678L555-405ZM270-120H120v-150l285-285 150 150-285 285Z"/></svg></button>
 
     <!-- BOTTOM NAV -->
     <?php include 'nav-bar-bottom.php'; ?>
@@ -193,7 +219,7 @@
     function createPostHTML(post) {
         let mediaHTML = '';
         if (post.tipo === 'imagem' && post.mediaFile) {
-            mediaHTML = `<img src="${post.mediaFile}">`;
+            mediaHTML = `<img src="${post.mediaFile}" loading="lazy" >`;
         } else if (post.tipo === 'video' && post.mediaFile) {
             mediaHTML = `<video width="320" height="240" controls>
                 <source src="${post.mediaFile}">
@@ -213,12 +239,15 @@
             });
         }
         
-        if(post.myPost == true){
-            editContainer = `<a href='editPost.php?postId=${post.id}'><span class='edit'>Opções do post</span></a>` ;
-        }
-
         const profilePic = post.user?.profilePic || '';
         const username = post.user?.username || 'Usuário';
+        let userVereification;
+        if(post.userId == '<?= $me['id'] ?>'){
+            userVereification = 'isMine=true';
+        }
+        else{
+            userVereification = 'isMine=false';
+        }
 
         return `
             <hr>
@@ -228,15 +257,17 @@
                     <div class="post-user">
                         <strong>${username}</strong>
                         <span>${post.postTime || ''}</span>
-                    </div>
-                </div></a>
+                    </div></a>
+                    <a href='postOptions.php?postid=${post.id}&${userVereification}' class='post-options-button'>
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--on-background)"><path d="M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z"/></svg>
+                    </a>
+                </div>
                 <span class="post-text">
                     <h2>${post.titulo || ''}</h2>
                     ${contentHTML}
                 </span><br>
                 ${mediaHTML}
                 ${tagsContainer}
-                ${editContainer}
             </article>
             
         `;
@@ -245,7 +276,7 @@
     function createPostRedditHTML(post, comunidade) {
         const profilePic = 'https://redditinc.com/hs-fs/hubfs/Reddit%20Inc/Content/Brand%20Page/Reddit_Logo.png';
         const username = post.author || 'Usuário do reddit';
-        const anexo = post.imagemAnexo ? `<img src="${post.imagemAnexo}">` : '';
+        const anexo = post.imagemAnexo ? `<img src="${post.imagemAnexo}" loading="lazy" >` : '';
         return `
             <hr>
             <article class="post-card">
@@ -371,7 +402,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M400-80 0-480l400-400 71 71-329 329 329 329-71 71Z"/></svg>
     </div>
     <div class="imagemContainer">
-        <img id="imagemVisu">
+        <img id="imagemVisu" loading="lazy" >
     </div>
     <div class="imagem-bottom">
         <center onclick="zoomInImageViwer()"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Zm-40-60v-80h-80v-80h80v-80h80v80h80v80h-80v80h-80Z"/></svg></center>
@@ -580,6 +611,9 @@ document.addEventListener('visibilitychange', () => {
         
     </div>
 </div>
+<div class="circulo circulo-um no-animation-hide" id='circulo-um'></div>
+<div class="circulo circulo-dois no-animation-hide" id='circulo-dois'></div>
+<div class="circulo circulo-tres no-animation-hide" id='circulo-tres'></div>
 <script>
     function showSideBar(){
         document.getElementById('SideBar').style.display = 'grid';
@@ -588,6 +622,39 @@ document.addEventListener('visibilitychange', () => {
     function closeSideBar(){
         document.getElementById('SideBar').style.display = 'none';
     }
+    
+    function redirectNewPost(event){
+        const circulos = [
+            document.getElementById('circulo-um'),
+            document.getElementById('circulo-dois'),
+            document.getElementById('circulo-tres')
+        ];
+    
+        circulos.forEach(c => {
+            const size = c.offsetWidth; // largura do círculo
+    
+            c.style.top = (event.clientY - size / 2) + 'px';
+            c.style.left = (event.clientX - size / 2) + 'px';
+    
+            c.classList.remove('no-animation-hide');
+        });
+    
+        setTimeout(() => {
+            window.location.href = 'newPost';
+        }, 600);
+    }
+    
+    window.addEventListener("pageshow", function (event) {
+        const circulos = [
+            document.getElementById('circulo-um'),
+            document.getElementById('circulo-dois'),
+            document.getElementById('circulo-tres')
+        ];
+    
+        circulos.forEach(c => {
+            c.classList.add('no-animation-hide');
+        });
+    });
 </script>
 </body>
 </html>

@@ -22,10 +22,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             echo "<script>localStorage.setItem('userAuthId', '$userAuthId');</script>";
         } else {
-            echo "<script>window.location.href = 'userErrors.php?error=incorrectpassword';</script>";
+            echo "<script>window.location.href = 'errorPage.php?code=4';</script>";
         }
     } else {
-        echo "<script>window.location.href = 'userErrors.php?error=nousername';</script>";
+        echo "<script>window.location.href = 'errorPage.php?code=3';</script>";
     }
 
     $stmt->close();
@@ -42,9 +42,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="colors.php">
     <base href="/Project-Verum/">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @media (max-width: 768px) {
+            body{
+                justify-content: unset;
+            }
+        }
+    </style>
 </head>
 <body>
-
+<span class='hideMobile'></span>
+<div>
     <form class="form-box" method="post" id="register-form">
         <div class="form-header">
             <h1>Bem Vindo<br>de volta</h1>
@@ -67,7 +75,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <button class="btn btn-secondary" onclick='window.history.back()'>✕ Cancel</button>
         <button class="btn btn-primary" onclick="document.getElementById('register-form').submit()">Continue</button>
     </div>
-
-
+</div>
 </body>
 </html>

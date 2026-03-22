@@ -5,6 +5,7 @@ error_reporting(E_ALL);
 session_start();
 require_once 'PhpShits/conn.php';
 require_once 'PhpShits/userFunctions.php';
+require_once('PhpShits/funcsTags.php');
 
 // ============================================
 // PROCESSAR POST QUANDO SUBMETIDO
@@ -43,8 +44,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $tags_array = array_map('trim', $tags_array);
     $tags_array = array_map('strtolower', $tags_array);
     $tags_array = array_unique($tags_array);
+
+    foreach($tags_array as $tag){
+        $id = createTag($conn, $tag);
+        $tags_id_array[] = $id;
+    }
     
-    $tags = implode(',', $tags_array);
+    $tags = implode(',', $tags_id_array);
     if ($post_type === 'texto') {
         // Post de texto - capturar corpo
         $post_body = trim($_POST['post_content_text'] ?? '');
@@ -344,15 +350,19 @@ function processMediaUpload($file, $upload_dir, $allowed_types, $max_size) {
                 </div>
             </div>
             <br>
-            <div class="tag-box form-group">
-                <input 
-                    type="text" 
-                    id="tag-input"
-                    placeholder="Digite uma tag e aperte ENTER"
-                >
-            
-                <div id="tags-container"></div>
-            
+            <div id="tags-container"></div>
+            <br>
+            <div class="tag-bosta form-group">
+                <span style='display: grid; grid-template-collumns: 2fr 1fr;'>
+                    <input 
+                        type="text" 
+                        id="tag-input"
+                        placeholder="Digite uma tag e aperte ENTER"
+                        maxlength="11"
+                    >
+                    <br>
+                    <button type="submit" class="btn btn-primary">Publicar</button>
+                </span>
                 <input type="hidden" name="tags" id="tags-hidden">
             </div>
         </div>
@@ -360,7 +370,6 @@ function processMediaUpload($file, $upload_dir, $allowed_types, $max_size) {
     
         <!-- BOTÃO FIXO -->
         <div class="post-footer">
-            <button type="submit" class="btn btn-primary">Publicar</button>
         </div>
     </form>
 </div>

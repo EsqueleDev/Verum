@@ -1,6 +1,7 @@
 <?php
 include 'PhpShits/conn.php';
 include 'PhpShits/algoritimoBoiola.php';
+include 'PhpShits/funcsTags.php';
 
 $postId = $_GET['postId'] ?? null;
 
@@ -26,7 +27,13 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
     $tags_array = array_map('trim', $tags_array);
     $tags_array = array_map('strtolower', $tags_array);
     $tags_array = array_unique($tags_array);
-    $tags = implode(',', $tags_array);
+
+    foreach($tags_array as $tag){
+        $id = createTag($conn, $tag);
+        $tags_id_array[] = $id;
+    }
+    
+    $tags = implode(',', $tags_id_array);
 
     // upload de imagem
     if($tipo === "imagem" && isset($_FILES['post_content_image']) && $_FILES['post_content_image']['error'] === UPLOAD_ERR_OK){
@@ -66,7 +73,12 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
 $postTags = [];
 
 if(!empty($post['tagPost'])){
-    $postTags = explode(',', $post['tagPost']);
+    $tagIds = explode(',', $post['tagPost']);
+
+    foreach($tagIds as $tagId){
+        $tagName = getTagName($conn, (int)$tagId, "PT_BR");
+        $postTags[] = $tagName;
+    }
 }
 
 ?>
@@ -191,16 +203,6 @@ if(!empty($post['tagPost'])){
             placeholder="Titulo do Post (Clique para digitar)"
         >
 
-        <!-- TIPO -->
-        <div class="post-type">
-            <span>Criar um post de:</span>
-            <div class="post-type-tabs">
-                <button class="post-tab" data-tab="texto" id="texto-button" type="button">Texto</button>
-                <button class="post-tab" data-tab="imagem" id='imagem-button' type="button">Imagem</button>
-                <button class="post-tab" data-tab="video" id='video-button' type="button">Video</button>
-            </div>
-        </div>
-
         <!-- CORPO DO POST -->
         <div class="post-content">
 
@@ -243,24 +245,26 @@ if(!empty($post['tagPost'])){
                 </div>
                 <?php endif; ?>
             </div>
-            <div class="tag-box form-group">
-                <input 
-                    type="text" 
-                    id="tag-input"
-                    placeholder="Digite uma tag e aperte ENTER"
-                >
-            
-                <div id="tags-container"></div>
-            
+            <br>
+            <div id="tags-container"></div>
+            <br>
+            <div class="tag-bosta form-group">
+                <span style='display: grid; grid-template-collumns: 2fr 1fr;'>
+                    <input 
+                        type="text" 
+                        id="tag-input"
+                        placeholder="Digite uma tag e aperte ENTER"
+                        maxlength="11"
+                    >
+                    <br>
+                    <button type="submit" class="btn btn-primary">Publicar</button>
+                    <br>
+                    <button type="button" class="btn btn-secondary">Apagar</button>
+                </span>
                 <input type="hidden" name="tags" id="tags-hidden">
             </div>
         </div>
         <br>
-    
-        <!-- BOTÃO FIXO -->
-        <div class="post-footer">
-            <button type="submit" class="btn btn-primary">Salvar</button>
-        </div>
     </form>
 </div>
 <script src="create-post.js"></script>

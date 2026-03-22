@@ -9,6 +9,7 @@
     include 'PhpShits/userFunctions.php';
     include 'PhpShits/algoritimoBoiola.php';
     include 'PhpShits/algoritimoMACHO.php';
+    include 'PhpShits/funcsTags.php';
     function quebrarPalavrasGrandes($texto, $limite = 30) {
         return preg_replace('/(\S{'.$limite.'})/u', '$1 -<wbr>', $texto);
     }
@@ -38,7 +39,8 @@
         $tags = explode(',', $post['tagPost']);
         
         foreach($tags as $tag){
-            $post['tags'][] = [$tag];
+            $post['tagsId'][] = [$tag];
+            $post['tags'][] = [getTagName($conn, $tag, "PT_BR")];
         }
         if($post['userId'] == $userId){
             $post['myPost'] = true;

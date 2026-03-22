@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="colors.php">
 </head>
 <body>
-
+<span class='hideMobile'></span>
 <div class="app-container">
     <div class="center-screen">
         <div class="welcome-box">

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Configurações</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css?id=1">
+    <link rel="stylesheet" href="colors.php">
+</head>
+<body>
+
+<div class="app-container">
+    <header class="app-header">
+        <button class="icon-btn"></button>
+        <span class="app-title">Aparência do Site</span>
+        <span></span>
+    </header>
+</div>
+</body>
+</html>
