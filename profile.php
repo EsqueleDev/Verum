@@ -3,6 +3,7 @@
     include 'PhpShits/algoritimoBoiola.php';
     include 'PhpShits/userFunctions.php';
     include 'PhpShits/connectionsUsersFuncs.php';
+    include 'PhpShits/funcsTags.php';
 
     $me = getUserInfo($conn, isset($_COOKIE['UserId']) ? $_COOKIE['UserId'] : 0);
     $Profile = getUserInfo($conn, isset($_GET['id']) && is_numeric($_GET['id']) ? $_GET['id'] : ($me ? $me['id'] : 0));
@@ -174,13 +175,8 @@
                         $tags = explode(',', $post['tagPost']);
                         if($tags[0] != 0){
                             foreach($tags as $tag){
-                                echo "<span class='tag'>#$tag</span>&nbsp;";
+                                echo "<span class='tag'>#" . getTagName($conn, $tag, "PT_BR") . "</span>&nbsp;";
                             }
-                        }
-                    ?>
-                    <?php
-                        if($post['userId'] == $me['id']){
-                            echo "<a href='editPost.php?postId=" . $post['id'] . "'><span class='edit'>Opções do post</span></a>";
                         }
                     ?>
                 </article>

@@ -7,7 +7,8 @@
         $stmt = $conn->prepare("
             SELECT *
             FROM post
-            ORDER BY postTime DESC
+            WHERE postApagado = 0
+            ORDER BY postTime DESC 
             LIMIT ? OFFSET ?
         ");
         $stmt->bind_param("ii", $limit, $offset);

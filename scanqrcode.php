@@ -2,42 +2,82 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Configurações</title>
+    <title>Escanear QR Code</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <link rel="stylesheet" href="style.css?id=1">
     <link rel="stylesheet" href="colors.php">
+
+    <style>
+        #reader {
+            width: 100%;
+            max-width: 400px;
+        }
+    </style>
 </head>
 <body>
 
 <div class="app-container">
     <header class="app-header">
-        <button class="icon-btn"></button>
-        <span class="app-title">Escanei o QR Code</span>
+        <button class="icon-btn" onclick='window.history.back()'><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z"/></svg></button>
+        <span class="app-title">Escaneie o QR Code</span>
         <span></span>
     </header>
+
     <br>
+
     <center>
-        <div id="reader" width="100%"></div>
+        <video id="video" autoplay playsinline muted style="width:100%; max-width:400px;"></video>
     </center>
 </div>
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-<script type='module'>
-    function onScanSuccess(decodedText, decodedResult) {
-      // handle the scanned code as you like, for example:
-      alert(`Code matched = ${decodedText}`, decodedResult);
+
+<script>
+const video = document.getElementById('video');
+
+async function startScanner() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "environment" }
+        });
+
+        video.srcObject = stream;
+
+        // 🔥 espera o vídeo realmente iniciar
+        await video.play();
+
+        if (!('BarcodeDetector' in window)) {
+            alert("Seu navegador não suporta BarcodeDetector");
+            return;
+        }
+
+        const detector = new BarcodeDetector({ formats: ['qr_code'] });
+
+        // 🔥 loop contínuo (melhor que setInterval)
+        async function scan() {
+            try {
+                const barcodes = await detector.detect(video);
+
+                if (barcodes.length > 0) {
+                    alert("Codigo escaneado, espere...");
+                    window.location.href = barcodes[0].rawValue;
+                }
+            } catch (err) {
+                console.error(err);
+            }
+
+            requestAnimationFrame(scan);
+        }
+
+        scan();
+
+    } catch (err) {
+        console.error("Erro câmera:", err);
+        alert("Erro ao acessar câmera");
     }
-    
-    function onScanFailure(error) {
-      // handle scan failure, usually better to ignore and keep scanning.
-      // for example:
-      console.warn(`Code scan error = ${error}`);
-    }
-    
-    let html5QrcodeScanner = new Html5QrcodeScanner(
-      "reader",
-      { fps: 10, qrbox: {width: 250, height: 250} },
-      /* verbose= */ false);
-    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+}
+
+startScanner();
 </script>
+
 </body>
 </html>

@@ -4,7 +4,7 @@
             $stmt = $conn->prepare("
                 SELECT *
                 FROM post
-                WHERE userId = ?
+                WHERE userId = ? AND postApagado = 0
                 ORDER BY id DESC
             ");
         }
@@ -12,7 +12,7 @@
             $stmt = $conn->prepare("
                 SELECT *
                 FROM post
-                WHERE grupoReferencia = ?
+                WHERE grupoReferencia = ? AND postApagado = 0
                 ORDER BY id DESC
             ");
         }
