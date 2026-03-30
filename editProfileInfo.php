@@ -59,8 +59,7 @@
     <meta charset="UTF-8">
     <title>Verum - Editar</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="colors.php">
-    <base href="/Project-Verum/">
+    <link rel="stylesheet" href="colors.php?id<?= rand(1,10000) ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>

@@ -19,22 +19,19 @@
     }
     
     function sendAFriendRequest($conn, $howSend, $howReceive){
-        if(is_null(getUserConnectionInfo($conn, $howSend, $howReceive))){
-            $stmt = $conn->prepare("INSERT INTO user_connections (user1, user2, status) VALUES (?, ?, 'pendend')");
-            $stmt->bind_param("ii", $howSend, $howReceive);
-            if ($stmt->execute()) {
-                // Send push notification to the recipient
-                sendFriendRequestNotification($conn, $howSend, $howReceive);
-                return true;
-            }
-            else{
-                return false;
-            }
-            $stmt->close();
+    
+        $stmt = $conn->prepare("
+            INSERT IGNORE INTO user_connections (user1, user2, status)
+            VALUES (?, ?, 'pendend')
+        ");
+    
+        $stmt->bind_param("ii", $howSend, $howReceive);
+    
+        if ($stmt->execute()) {
+            return true;
         }
-        else{
-            return false;
-        }
+    
+        return false;
     }
 
     // Send push notification when a friend request is made

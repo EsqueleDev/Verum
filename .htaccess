@@ -6,3 +6,7 @@ RewriteRule ^home/?$ home.php [L]
 RewriteRule ^settings/?$ settings.php [L]
 RewriteRule ^themeSelector/?$ themes.php [L]
 RewriteRule ^newPost/?$ createPost.php [L]
+
+<Files "style.css">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+</Files>

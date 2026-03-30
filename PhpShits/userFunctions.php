@@ -15,6 +15,7 @@
             $user['livros'] = $row['livros'];
             $user['musicas'] = $row['musicas'];
             $user['filmes'] = $row['filmes'];
+            $user['tipoConta'] = $row['tipoConta'];
             if(!is_null($userAuthId) && $userAuthId == $row['userAuthId']){
                 $user['email'] = $row['email'];
             }
@@ -49,7 +50,7 @@
         $colSub = "subRedditRelacionado" . $lingua;
     
         $sql = "
-            SELECT l.$colNome AS nome, l.$colSub AS subreddit
+            SELECT l.id, l.$colNome AS nome, l.$colSub AS subreddit
             FROM users_likes ul
             JOIN likes l ON ul.likes_id = l.id
             WHERE ul.user_id = ?
@@ -64,6 +65,7 @@
     
         while ($row = $result->fetch_assoc()) {
             $likes[] = [
+                "id" => $row['id'],
                 "nome" => $row["nome"],
                 "subreddit" => $row["subreddit"]
             ];

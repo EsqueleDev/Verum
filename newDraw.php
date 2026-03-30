@@ -1,84 +1,189 @@
 <?php
-include 'PhpShits/conn.php';
-include 'PhpShits/algoritimoBoiola.php';
-include 'PhpShits/funcsTags.php';
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+session_start();
+require_once 'PhpShits/conn.php';
+require_once 'PhpShits/userFunctions.php';
+require_once('PhpShits/funcsTags.php');
 
-$postId = $_GET['postId'] ?? null;
+// ============================================
+// PROCESSAR POST QUANDO SUBMETIDO
+// ============================================
 
-if(!$postId){
-    die("Post não encontrado");
-}
-
-$post = getOnePost($conn, $postId);
-$post_error = null;
 $post_processed = false;
-$postTipo = $post['tipo'] ?? 'texto';
-if($_SERVER['REQUEST_METHOD'] === 'POST'){
+$post_error = null;
+$post_data = [];
 
-    $title = trim($_POST['post_title'] ?? '');
-    $content = trim($_POST['post_content_text'] ?? '');
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // ------------------------------------------------
+    // 1. DETECTAR TIPO DE POST
+    // ------------------------------------------------
+    $post_type = 'imagem';
+    
+    // Validar tipo de post
+    $allowed_types = ['texto', 'imagem', 'video'];
+    if (!in_array($post_type, $allowed_types)) {
+        $post_type = 'texto';
+    }
+    
+    // ------------------------------------------------
+    // 2. CAPTURAR DADOS DO POST
+    // ------------------------------------------------
+    $post_title = trim($_POST['post_title'] ?? '');
+    $post_body = '';
+    $media_filename = null;
+    $media_path = null;
+    
+    // ------------------------------------------------
+    // 3. PROCESSAR CONFORME TIPO DE POST
+    // ------------------------------------------------
     $tags = $_POST['tags'] ?? '';
-    $tipo = $_POST['post_type'] ?? 'texto';
-
-    $media = $post['mediaFile'];
-
-    // limpar tags
+    
     $tags_array = explode(',', $tags);
     $tags_array = array_map('trim', $tags_array);
     $tags_array = array_map('strtolower', $tags_array);
     $tags_array = array_unique($tags_array);
 
     foreach($tags_array as $tag){
-        $id = createTag($conn, $tag);
-        $tags_id_array[] = $id;
+        if($tag != ''){
+            $id = createTag($conn, $tag);
+            $tags_id_array[] = $id;            
+        }
+        else{
+            $tags_id_array[] = '55';
+        }
     }
     
     $tags = implode(',', $tags_id_array);
-
-    // upload de imagem
-    if($tipo === "imagem" && isset($_FILES['post_content_image']) && $_FILES['post_content_image']['error'] === UPLOAD_ERR_OK){
-
-        $ext = pathinfo($_FILES['post_content_image']['name'], PATHINFO_EXTENSION);
-        $name = uniqid('img_').".".$ext;
-        $dest = "uploads/images/".$name;
-
-        move_uploaded_file($_FILES['post_content_image']['tmp_name'], $dest);
-
-        $media = $dest;
+    if ($post_type === 'texto') {
+        // Post de texto - capturar corpo
+        $post_body = trim($_POST['post_content_text'] ?? '');
+        
+    } elseif ($post_type === 'imagem') {
+        // Post de imagem - processar upload
+        $post_body = trim($_POST['post_content_text'] ?? ''); // opcional caption
+        
+        if (isset($_FILES['post_content_image']) && $_FILES['post_content_image']['error'] === UPLOAD_ERR_OK) {
+            $upload_result = processImageUpload($_FILES['post_content_image']);
+            if ($upload_result['success']) {
+                $media_filename = $upload_result['filename'];
+                $media_path = $upload_result['path'];
+            } else {
+                $post_error = $upload_result['error'];
+            }
+        } else {
+            $post_error = 'Nenhuma imagem selecionada para post de imagem.';
+        }
+        
+    } elseif ($post_type === 'video') {
+        // Post de vídeo - processar upload
+        $post_body = trim($_POST['post_content_text'] ?? ''); // opcional caption
+        
+        if (isset($_FILES['post_content_video']) && $_FILES['post_content_video']['error'] === UPLOAD_ERR_OK) {
+            $upload_result = processVideoUpload($_FILES['post_content_video']);
+            if ($upload_result['success']) {
+                $media_filename = $upload_result['filename'];
+                $media_path = $upload_result['path'];
+            } else {
+                $post_error = $upload_result['error'];
+            }
+        } else {
+            $post_error = 'Nenhum vídeo selecionado para post de vídeo.';
+        }
     }
-
-    // upload de video
-    if($tipo === "video" && isset($_FILES['post_content_video']) && $_FILES['post_content_video']['error'] === UPLOAD_ERR_OK){
-
-        $ext = pathinfo($_FILES['post_content_video']['name'], PATHINFO_EXTENSION);
-        $name = uniqid('vid_').".".$ext;
-        $dest = "uploads/videos/".$name;
-
-        move_uploaded_file($_FILES['post_content_video']['tmp_name'], $dest);
-
-        $media = $dest;
+    
+    // ------------------------------------------------
+    // 4. PREPARAR DADOS PARA SQL (USAR NO SEU CÓDIGO)
+    // ------------------------------------------------
+    $post_data = [
+        'type'          => $post_type,
+        'title'         => $post_title,
+        'body'          => $post_body,
+        'media_filename'=> $media_filename,
+        'media_path'    => $media_path,
+        'user_id'       => $_COOKIE['UserId'] ?? null,
+        'created_at'    => date('Y-m-d H:i:s')
+    ];
+    
+    // ------------------------------------------------
+    // 5. EXEMPLO: INSERIR NO BANCO (DESCOMENTE E ADAPTE)
+    // ------------------------------------------------
+    
+    if (!$post_error && $conn) {
+        $stmt = $conn->prepare("INSERT INTO post (userId, tipo, titulo, conteudo, mediaFile, tagPost) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("isssss", 
+            $post_data['user_id'],
+            $post_data['type'],
+            $post_data['title'],
+            $post_data['body'],
+            $post_data['media_path'],
+            $tags
+        );
+        if ($stmt->execute()) {
+            $post_processed = true;
+            // Redirecionar ou mostrar sucesso
+        }
+        $stmt->close();
     }
-
-    $stmt = $conn->prepare("UPDATE post SET titulo=?, conteudo=?, tipo=?, mediaFile=?, tagPost=? WHERE id=?");
-    $stmt->bind_param("sssssi", $title, $content, $tipo, $media, $tags, $postId);
-
-    if($stmt->execute()){
+    
+    
+    if (!$post_error && !empty($post_title)) {
         $post_processed = true;
-    }else{
-        $post_error = "Erro ao atualizar post.";
     }
-
 }
 
-$postTags = [];
+// ============================================
+// FUNÇÕES DE PROCESSAMENTO DE IMAGEM/VIDEO
+// ============================================
 
-if(!empty($post['tagPost'])){
-    $tagIds = explode(',', $post['tagPost']);
+function processImageUpload($file) {
+    $upload_dir = 'uploads/images/';
+    return processMediaUpload($file, $upload_dir, ['image/jpeg', 'image/png', 'image/gif', 'image/webp'], 10 * 1024 * 1024);
+}
 
-    foreach($tagIds as $tagId){
-        $tagName = getTagName($conn, (int)$tagId, "PT_BR");
-        $postTags[] = $tagName;
+function processVideoUpload($file) {
+    $upload_dir = 'uploads/videos/';
+    return processMediaUpload($file, $upload_dir, ['video/mp4', 'video/webm', 'video/ogg'], 50 * 1024 * 1024);
+}
+
+function processMediaUpload($file, $upload_dir, $allowed_types, $max_size) {
+    $result = ['success' => false, 'filename' => null, 'path' => null, 'error' => null];
+    
+    // Validar tamanho
+    if ($file['size'] > $max_size) {
+        $result['error'] = 'Arquivo muito grande. Tamanho máximo: ' . ($max_size / 1024 / 1024) . 'MB';
+        return $result;
     }
+    
+    // Validar tipo MIME
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $mime_type = $finfo->file($file['tmp_name']);
+    if (!in_array($mime_type, $allowed_types)) {
+        $result['error'] = 'Tipo de arquivo não permitido.';
+        return $result;
+    }
+    
+    // Criar diretório se não existir
+    if (!is_dir($upload_dir)) {
+        mkdir($upload_dir, 0755, true);
+    }
+    
+    // Gerar nome único
+    $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+    $filename = uniqid('post_') . '_' . time() . '.' . $extension;
+    $destination = $upload_dir . $filename;
+    
+    // Mover arquivo
+    if (move_uploaded_file($file['tmp_name'], $destination)) {
+        $result['success'] = true;
+        $result['filename'] = $filename;
+        $result['path'] = $destination;
+    } else {
+        $result['error'] = 'Erro ao fazer upload do arquivo.';
+    }
+    
+    return $result;
 }
 
 ?>
@@ -86,7 +191,7 @@ if(!empty($post['tagPost'])){
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Verum - Editar Post</title>
+    <title>Verum - Criar Post</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="colors.php?id<?= rand(1,10000) ?>">
@@ -177,7 +282,7 @@ if(!empty($post['tagPost'])){
     <!-- HEADER -->
     <header class="app-header post-header-bar">
         <button class="icon-btn" onclick="window.history.back();"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="m313-440 224 224-57 56-320-320 320-320 57 56-224 224h487v80H313Z"/></svg></button>
-        <span class="app-title">Editar Post</span>
+        <span class="app-title">Publicar Arte</span>
         <span></span>
     </header>
 
@@ -192,59 +297,31 @@ if(!empty($post['tagPost'])){
     <form method="POST" class="create-post" enctype="multipart/form-data">
         
         <!-- HIDDEN INPUT FOR POST TYPE -->
-        <input type="hidden" name="post_type" id="post_type" value="<?= $postTipo ?>">
+        <input type="hidden" name="post_type" id="post_type" value="texto">
 
         <!-- TÍTULO -->
         <input
             type="text"
             name="post_title"
             class="post-title-input"
-            value='<?= $post['titulo'] ?>'
-            placeholder="Titulo do Post (Clique para digitar)"
+            placeholder="Nome da Arte (Clique para digitar)"
         >
 
+        <!-- TIPO -->
         <!-- CORPO DO POST -->
         <div class="post-content">
-
-            <!-- TEXTO -->
-            <textarea
-                name="post_content_text"
-                class="post-body post-panel"
-                data-panel="texto"
-                placeholder="Clique e digite o corpo do post."
-                style="width: 100%;"
-            ><?= $post['conteudo'] ?></textarea>
-
-            <!-- IMAGEM -->
-            <div class="media-box post-panel" data-panel="imagem">
-                <div class="media-placeholder" style='display: none;' onclick="document.getElementById('post-content-image').click();">
+            <div class="media-box post-panel active" data-panel="imagem">
+                <div class="media-placeholder" onclick="document.getElementById('post-content-image').click(); previewImage(input);">
                     <span class="media-plus">+</span>
-                    <p>Clique para selecionar UMA foto.</p>
+                    <p>Clique para selecionar UM desenho.</p>
                 </div>
                 <input type="file" accept="image/*" hidden name="post_content_image" id="post-content-image">
-                <?php if($post['tipo'] === 'imagem' && $post['mediaFile']): ?>
-                <script>document.getElementById('imagem-button').click();</script>
-                <div class="image-preview" id="image-preview" style="display:block;">
-                    <img src="<?= $post['mediaFile'] ?>" id="preview-img" style='max-width: 100%;'>
+                <div id="image-preview" class="media-preview" style="display: none;">
+                    <img id="preview-img" src="" alt="Preview">
+                    <button type="button" class="remove-media" onclick="removeImagePreview();">×</button>
                 </div>
-                <?php endif; ?>
             </div>
 
-            <!-- VIDEO -->
-            <div class="media-box post-panel" data-panel="video">
-                <div class="media-placeholder" style='display: none;' onclick="document.getElementById('post-content-video').click();">
-                    <span class="media-plus">+</span>
-                    <p>Clique para selecionar UM vídeo.</p>
-                </div>
-                <input type="file" accept="video/*" hidden name="post_content_video" id="post-content-video">
-                <?php if($post['tipo'] === 'video' && $post['mediaFile']): ?>
-                <div class="video-preview" id="video-preview" style="display:block;">
-                    <video controls>
-                        <source src="<?= $post['mediaFile'] ?>">
-                    </video>
-                </div>
-                <?php endif; ?>
-            </div>
             <br>
             <div id="tags-container"></div>
             <br>
@@ -258,37 +335,24 @@ if(!empty($post['tagPost'])){
                     >
                     <br>
                     <button type="submit" class="btn btn-primary">Publicar</button>
-                    <br>
-                    <button type="button" class="btn btn-secondary">Apagar</button>
                 </span>
                 <input type="hidden" name="tags" id="tags-hidden">
             </div>
         </div>
         <br>
+    
+        <!-- BOTÃO FIXO -->
+        <div class="post-footer">
+        </div>
     </form>
 </div>
 <script src="create-post.js"></script>
 <script>
-    document.addEventListener("DOMContentLoaded", () => {
-    
-        const tipo = document.getElementById("post_type").value;
-    
-        const tab = document.querySelector(`[data-tab="${tipo}"]`);
-        const panel = document.querySelector(`[data-panel="${tipo}"]`);
-    
-        if(tab) tab.classList.add("active");
-        if(panel) panel.classList.add("active");
-    
-    });
-    let tags = <?= json_encode($postTags) ?>;
+    let tags = [];
     
     const input = document.getElementById("tag-input");
     const container = document.getElementById("tags-container");
     const hidden = document.getElementById("tags-hidden");
-    
-    tags.forEach(tag => createTag(tag));
-    
-    hidden.value = tags.join(",");
     
     input.addEventListener("keydown", function(e){
     

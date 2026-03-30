@@ -4,34 +4,52 @@
     include 'PhpShits/userFunctions.php';
     include 'PhpShits/connectionsUsersFuncs.php';
     include 'PhpShits/funcsTags.php';
+    include 'PhpShits/albumFuncs.php';
+    include 'PhpShits/fansFuncs.php';
+    include 'PhpShits/artistsFuncs.php';
 
     $me = getUserInfo($conn, isset($_COOKIE['UserId']) ? $_COOKIE['UserId'] : 0);
     $Profile = getUserInfo($conn, isset($_GET['id']) && is_numeric($_GET['id']) ? $_GET['id'] : ($me ? $me['id'] : 0));
+    $MeusAlbuns = getUserAlbuns($conn, $Profile['id']);
     
     function quebrarPalavrasGrandes($texto, $limite = 30) {
         return preg_replace('/(\S{'.$limite.'})/u', '$1<wbr>', $texto);
     }
+    //Trocar esta porra por um switch :D
+    //Tambem Arrumar o fato de que sempre que mando um pedido ou algo 
+    //Do tipo ele salva duas vezes a mesma merda no historico
+    if(isset($_GET['request'])){
     
-    if(isset($_GET['request']) && $_GET['request'] == 'sended'){
-        sendAFriendRequest($conn, $me['id'], $Profile['id']);
-        echo "<script>window.location.href = document.referrer;</script>";
-    }
-
-    else if(isset($_GET['request']) && $_GET['request'] == 'accept'){
-        changeFriendRequestStatus($conn, $Profile['id'], $me['id'], 'accepted');
-        echo "<script>window.location.href = document.referrer;</script>";
-    }
-
-    else if(isset($_GET['request']) && $_GET['request'] == 'reject'){
-        changeFriendRequestStatus($conn, $Profile['id'], $me['id'], 'rejected');
-        echo "<script>window.location.href = document.referrer;</script>";
-    }
+        if($_GET['request'] == 'sended'){
+            if(isset($me['id'], $Profile['id'])){
+                sendAFriendRequest($conn, $me['id'], $Profile['id']);
+            }
+        }
     
-    else if(isset($_GET['request']) && $_GET['request'] == 'retry'){
-        retryFriendRequestStatus($conn, $Profile['id'], $me['id']);
-        echo "<script>window.location.href = document.referrer;</script>";
-    }
+        else if($_GET['request'] == 'accept'){
+            changeFriendRequestStatus($conn, $Profile['id'], $me['id'], 'accepted');
+        }
     
+        else if($_GET['request'] == 'reject'){
+            changeFriendRequestStatus($conn, $Profile['id'], $me['id'], 'rejected');
+        }
+    
+        else if($_GET['request'] == 'retry'){
+            retryFriendRequestStatus($conn, $Profile['id'], $me['id']);
+        }
+    
+        else if($_GET['request'] == 'follow'){
+            startFollowPage($conn, $me['id'], $Profile['id']);
+        }
+    
+        else if($_GET['request'] == 'stopfollow'){
+            stopFollowPage($conn, $me['id'], $Profile['id']);
+        }
+    
+        // REDIRECT REAL (corrige histórico + evita bug estranho)
+        header("Location: " . $_SERVER['HTTP_REFERER']);
+        exit;
+    }
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -40,7 +58,7 @@
     <title>Perfil</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css?i=<?= rand(1, 1000) ?>">
-    <link rel="stylesheet" href="colors.php">
+    <link rel="stylesheet" href="colors.php?id<?= rand(1,10000) ?>">
 </head>
 <body>
 <div class='hideMobile'></div>
@@ -69,220 +87,259 @@
             </div>
             
             <!-- BOTÕES -->
-            <?php if($me['id'] != $Profile['id']): ?>
+            <?php if($me['id'] != $Profile['id'] && $me['tipoConta'] != 'artista'): ?>
                 <?php
                 $connection = getUserConnectionInfo($conn, $me['id'], $Profile['id']);
 
                 $status = $connection['status'] ?? null;
                 $didISend = $connection['didISendThisRequest'] ?? false;
                 ?>
-
-                <?php if (is_null($connection)): ?>
-
-                    <!-- NÃO EXISTE RELAÇÃO -->
-                    <a href="profile.php?id=<?= $Profile['id'] ?>&request=sended">
-                        <button class="btn btn-secondary">Enviar Pedido</button>
-                    </a>
-
-                <?php elseif ($status === 'pendend' && $didISend): ?>
-
-                    <!-- PEDIDO ENVIADO POR MIM -->
-                    <button class="btn btn-secondary" disabled>Pedido Enviado</button>
-
-                <?php elseif ($status === 'rejected' && !$didISend): ?>
-
-                    <!-- PEDIDO ENVIADO POR MIM -->
-                    <div class="button-group">
-                        <button class="btn btn-secondary" disabled>Bloquear?</button>
-                        <a href='profile.php?id=<?= $Profile['id'] ?>&request=retry'><button class="btn btn-primary" >Dar outra chance</button></a>
-                    </div>
-
-                <?php elseif (($status === 'rejected' || $status === 'blocked') && $didISend): ?>
-
-                    <!-- PEDIDO ENVIADO POR MIM -->
-                    <button class="btn btn-primary" disabled>Não incomode esta pessoa</button>
-
-                
-                <?php elseif ($status === 'pendend' && !$didISend): ?>
-
-                    <!-- PEDIDO RECEBIDO -->
-                    <center><div class="button-group">
-                        <a href="profile.php?id=<?= $Profile['id'] ?>&request=reject">
-                            <button class="btn btn-secondary">Recusar</button>
+                <?php if($Profile['tipoConta'] == 'usuario'): ?>
+                    <?php if (is_null($connection)): ?>
+    
+                        <!-- NÃO EXISTE RELAÇÃO -->
+                        <a href="profile.php?id=<?= $Profile['id'] ?>&request=sended">
+                            <button class="btn btn-secondary">Enviar Pedido</button>
                         </a>
-                        <a href="profile.php?id=<?= $Profile['id'] ?>&request=accept">
-                            <button class="btn btn-primary">Aceitar</button>
-                        </a>
-                    </div></center>
-                    <!-- aqui futuramente: aceitar / recusar -->
-
-                <?php elseif ($status === 'accepted'): ?>
-
-                    <!-- AMIZADE ACEITA -->
-                    <button class="btn btn-primary">
-                        Mandar Mensagem
-                    </button>
-
+    
+                    <?php elseif ($status === 'pendend' && $didISend): ?>
+    
+                        <!-- PEDIDO ENVIADO POR MIM -->
+                        <button class="btn btn-secondary" disabled>Pedido Enviado</button>
+    
+                    <?php elseif ($status === 'rejected' && !$didISend): ?>
+    
+                        <!-- PEDIDO ENVIADO POR MIM -->
+                        <div class="button-group">
+                            <button class="btn btn-secondary" disabled>Bloquear?</button>
+                            <a href='profile.php?id=<?= $Profile['id'] ?>&request=retry'><button class="btn btn-primary" >Dar outra chance</button></a>
+                        </div>
+    
+                    <?php elseif (($status === 'rejected' || $status === 'blocked') && $didISend): ?>
+    
+                        <!-- PEDIDO ENVIADO POR MIM -->
+                        <button class="btn btn-primary" disabled>Não incomode esta pessoa</button>
+    
+                    
+                    <?php elseif ($status === 'pendend' && !$didISend): ?>
+    
+                        <!-- PEDIDO RECEBIDO -->
+                        <center><div class="button-group">
+                            <a href="profile.php?id=<?= $Profile['id'] ?>&request=reject">
+                                <button class="btn btn-secondary">Recusar</button>
+                            </a>
+                            <a href="profile.php?id=<?= $Profile['id'] ?>&request=accept">
+                                <button class="btn btn-primary">Aceitar</button>
+                            </a>
+                        </div></center>
+                        <!-- aqui futuramente: aceitar / recusar -->
+    
+                    <?php elseif ($status === 'accepted'): ?>
+    
+                        <!-- AMIZADE ACEITA -->
+                        <a href='errorPage.php?code=2'><button class="btn btn-primary">
+                            Mandar Mensagem
+                        </button></a>
+    
+                    <?php endif; ?>
                 <?php endif; ?>
+                <?php if($Profile['tipoConta'] == 'artista'): ?>
+                    <?php if(!checkIfUserFollows($conn, $me['id'], $Profile['id'])): ?>
+                        <a href="profile.php?id=<?= $Profile['id'] ?>&request=follow"><button class="btn btn-primary">Seguir Artista</button></a>
+                    <?php endif ?>
+                    <?php if(checkIfUserFollows($conn, $me['id'], $Profile['id'])): ?>
+                        <a href="profile.php?id=<?= $Profile['id'] ?>&request=stopfollow"><button class="btn btn-primary">Deixar de Seguir</button></a>
+                    <?php endif ?>
+                <?php endif ?>
             <?php endif; ?>
 
             <!-- AÇÕES -->
-            <div class="profile-tabs">
-                <button class="icon-btn button-profile-selected" style="padding: 8px;" onclick="switchTab('posts')"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M240-400h320v-80H240v80Zm0-120h480v-80H240v80Zm0-120h480v-80H240v80ZM80-80v-720q0-33 23.5-56.5T160-880h640q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H240L80-80Zm126-240h594v-480H160v525l46-45Zm-46 0v-480 480Z"/></svg></button>
-                <button class="icon-btn" style="padding: 8px;" onclick="switchTab('albuns')"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm40-80h480L570-480 450-320l-90-120-120 160Zm-40 80v-560 560Z"/></svg></button>
-                <button class="icon-btn" style="padding: 8px;" onclick="switchTab('saved')"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M40-160v-112q0-34 17.5-62.5T104-378q62-31 126-46.5T360-440q66 0 130 15.5T616-378q29 15 46.5 43.5T680-272v112H40Zm720 0v-120q0-44-24.5-84.5T666-434q51 6 96 20.5t84 35.5q36 20 55 44.5t19 53.5v120H760ZM247-527q-47-47-47-113t47-113q47-47 113-47t113 47q47 47 47 113t-47 113q-47 47-113 47t-113-47Zm466 0q-47 47-113 47-11 0-28-2.5t-28-5.5q27-32 41.5-71t14.5-81q0-42-14.5-81T544-792q14-5 28-6.5t28-1.5q66 0 113 47t47 113q0 66-47 113ZM120-240h480v-32q0-11-5.5-20T580-306q-54-27-109-40.5T360-360q-56 0-111 13.5T140-306q-9 5-14.5 14t-5.5 20v32Zm296.5-343.5Q440-607 440-640t-23.5-56.5Q393-720 360-720t-56.5 23.5Q280-673 280-640t23.5 56.5Q327-560 360-560t56.5-23.5ZM360-240Zm0-400Z"/></svg></button>
-                <button class="icon-btn" style="padding: 8px;" onclick="switchTab('about')"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M367-527q-47-47-47-113t47-113q47-47 113-47t113 47q47 47 47 113t-47 113q-47 47-113 47t-113-47ZM160-160v-112q0-34 17.5-62.5T224-378q62-31 126-46.5T480-440q66 0 130 15.5T736-378q29 15 46.5 43.5T800-272v112H160Zm80-80h480v-32q0-11-5.5-20T700-306q-54-27-109-40.5T480-360q-56 0-111 13.5T260-306q-9 5-14.5 14t-5.5 20v32Zm296.5-343.5Q560-607 560-640t-23.5-56.5Q513-720 480-720t-56.5 23.5Q400-673 400-640t23.5 56.5Q447-560 480-560t56.5-23.5ZM480-640Zm0 400Z"/></svg></button>
-            </div>
+            <?php if($Profile['tipoConta'] == 'usuario'): ?>
+                <div class="profile-tabs">
+                    <button class="icon-btn button-profile-selected" style="padding: 8px;" onclick="switchTab('posts')"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M240-400h320v-80H240v80Zm0-120h480v-80H240v80Zm0-120h480v-80H240v80ZM80-80v-720q0-33 23.5-56.5T160-880h640q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H240L80-80Zm126-240h594v-480H160v525l46-45Zm-46 0v-480 480Z"/></svg></button>
+                    <button class="icon-btn" style="padding: 8px;" onclick="switchTab('albuns')"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm40-80h480L570-480 450-320l-90-120-120 160Zm-40 80v-560 560Z"/></svg></button>
+                    <button class="icon-btn" style="padding: 8px;" onclick="switchTab('saved')"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M40-160v-112q0-34 17.5-62.5T104-378q62-31 126-46.5T360-440q66 0 130 15.5T616-378q29 15 46.5 43.5T680-272v112H40Zm720 0v-120q0-44-24.5-84.5T666-434q51 6 96 20.5t84 35.5q36 20 55 44.5t19 53.5v120H760ZM247-527q-47-47-47-113t47-113q47-47 113-47t113 47q47 47 47 113t-47 113q-47 47-113 47t-113-47Zm466 0q-47 47-113 47-11 0-28-2.5t-28-5.5q27-32 41.5-71t14.5-81q0-42-14.5-81T544-792q14-5 28-6.5t28-1.5q66 0 113 47t47 113q0 66-47 113ZM120-240h480v-32q0-11-5.5-20T580-306q-54-27-109-40.5T360-360q-56 0-111 13.5T140-306q-9 5-14.5 14t-5.5 20v32Zm296.5-343.5Q440-607 440-640t-23.5-56.5Q393-720 360-720t-56.5 23.5Q280-673 280-640t23.5 56.5Q327-560 360-560t56.5-23.5ZM360-240Zm0-400Z"/></svg></button>
+                    <button class="icon-btn" style="padding: 8px;" onclick="switchTab('about')"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M367-527q-47-47-47-113t47-113q47-47 113-47t113 47q47 47 47 113t-47 113q-47 47-113 47t-113-47ZM160-160v-112q0-34 17.5-62.5T224-378q62-31 126-46.5T480-440q66 0 130 15.5T736-378q29 15 46.5 43.5T800-272v112H160Zm80-80h480v-32q0-11-5.5-20T700-306q-54-27-109-40.5T480-360q-56 0-111 13.5T260-306q-9 5-14.5 14t-5.5 20v32Zm296.5-343.5Q560-607 560-640t-23.5-56.5Q513-720 480-720t-56.5 23.5Q400-673 400-640t23.5 56.5Q447-560 480-560t56.5-23.5ZM480-640Zm0 400Z"/></svg></button>
+                </div>
+            <?php endif; ?>
+            <?php if($Profile['tipoConta'] == 'artista'): ?>
+                <div class="profile-tabs">
+                    <button class="icon-btn button-profile-selected" style="padding: 8px;" onclick="switchTab('draws')"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M240-120q-45 0-89-22t-71-58q26 0 53-20.5t27-59.5q0-50 35-85t85-35q50 0 85 35t35 85q0 66-47 113t-113 47Zm0-80q33 0 56.5-23.5T320-280q0-17-11.5-28.5T280-320q-17 0-28.5 11.5T240-280q0 23-5.5 42T220-202q5 2 10 2h10Zm230-160L360-470l358-358q11-11 27.5-11.5T774-828l54 54q12 12 12 28t-12 28L470-360Zm-190 80Z"/></svg></button>
+                </div>
+            <?php endif; ?>
         </div>
 
         <!-- TABS -->
-        <div id="tab-posts" class="tab-content active">
-            <center>
-                <h2 style="font-size:24px; font-weight:500;">Posts:</h2>
-            </center><br>
-
-            <!-- POST -->
-            <hr>
-            <?php $posts = algoritmoDeDadosEspecificos($conn, $Profile['id']) ?>
-            <?php foreach($posts as $post): ?>
-                <br>
-                <article class="post-card">
-                    <div class="post-header">
-                        <div class="avatar" style="background: url(<?= htmlspecialchars($Profile['profilePic'] ?? '') ?>); background-repeat: no-repeat; background-size: cover;"></div>
-                        <div class="post-user">
-                            <strong><?= htmlspecialchars($Profile['username']) ?></strong>
-                            <span><?= htmlspecialchars($post['postTime'] ?? '') ?></span>
-                        </div>
-                    </div>
-
-                    <p class="post-text">
-                        <h2><?= htmlspecialchars($post['titulo'] ?? '') ?></h2>
-                        <?php if($post['tipo'] == 'texto'): ?>
-                            <?= nl2br(quebrarPalavrasGrandes(htmlspecialchars($post['conteudo'] ?? ''))) ?>
-                        <?php endif; ?>
-                    </p>
-                    <?php if($post['tipo'] == 'imagem'): ?>
-                        <img src="<?= htmlspecialchars($post['mediaFile'] ?? '') ?>" onclick="openImageViwer('<?= htmlspecialchars($post['mediaFile'] ?? '') ?>');">
-                    <?php endif; ?>
-                    <?php if($post['tipo'] == 'video'): ?>
-                        <video width="320" height="240" controls>
-                            <source src="<?= htmlspecialchars($post['mediaFile'] ?? '') ?>">
-                            Your browser does not support the video tag.
-                        </video>
-                    <?php endif; ?>
+        <?php if($Profile['tipoConta'] == 'usuario'): ?>
+            <div id="tab-posts" class="tab-content active">
+                <center>
+                    <h2 style="font-size:24px; font-weight:500;">Posts:</h2>
+                </center><br>
+    
+                <!-- POST -->
+                <hr>
+                <?php $posts = algoritmoDeDadosEspecificos($conn, $Profile['id']) ?>
+                <?php foreach($posts as $post): ?>
                     <br>
-                    <?php
-                        $tags = explode(',', $post['tagPost']);
-                        if($tags[0] != 0){
-                            foreach($tags as $tag){
-                                echo "<span class='tag'>#" . getTagName($conn, $tag, "PT_BR") . "</span>&nbsp;";
-                            }
-                        }
-                    ?>
-                </article>
-                <br>
-                <hr>
-            <?php endforeach ?>
-        </div>
-
-        <div id="tab-albuns" class="tab-content">
-            <center>
-                <h2 style="font-size:24px; font-weight:500;">Albums:</h2>
-            </center><br>
-            <hr>
-            <!-- Albums content will be added later -->
-        </div>
-
-        <div id="tab-saved" class="tab-content">
-            <center>
-                <h2 style="font-size:24px; font-weight:500;">Amigos:</h2>
-            </center><br>
-            <hr>
-            <?php $userFriends = getAllFriendFromUser($conn, $Profile['id']) ?>
-            <div class="suggestions" style="padding: 12px;">    
-                <?php foreach($userFriends as $friend): ?>
-                    <?php $friend = getUserInfo($conn, $friend['friend_id']) ?>
-                    <a href="profile.php?id=<?= $friend['id'] ?>"><div class="suggestion-card">
-                        <div class="suggest-avatar avatar-a" style="background: url(<?= $friend['profilePic'] ?>);  background-repeat: no-repeat;  background-size: cover;"></div>
-                        <span><?= $friend['username'] ?></span>
-                    </div></a>
-                <?php endforeach; ?>
-            </div>
-        </div>
-
-        <div id="tab-about" class="tab-content">
-            <center>
-                <h2 style="font-size:24px; font-weight:500;">Sobre:</h2>
-            </center><br>
-            <hr>
-            <div class="two-options" id="about-options">
-                <div class="a-option" onclick="showAboutSection('gostos')">
-                    <span class="title">Gostos Pessoais</span>
-                    <svg class="arrow" xmlns="http://www.w3.org/2000/svg"
-                        height="24px"
-                        viewBox="0 -960 960 960"
-                        width="24px"
-                        fill="#FFFFFF">
-                        <path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/>
-                    </svg>
-                </div>
-                <div class="a-option" onclick="showAboutSection('spotify')">
-                    <span class="title">Informações do Spotify</span>
-                    <svg class="arrow" xmlns="http://www.w3.org/2000/svg"
-                        height="24px"
-                        viewBox="0 -960 960 960"
-                        width="24px"
-                        fill="#FFFFFF">
-                        <path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/>
-                    </svg>
-                </div>
-            </div>
-            
-            <!-- Gostos Pessoais Section -->
-            <div id="about-gostos" class="about-detail" style="display: none;">
-                <div class="about-header">
-                    <button class="icon-btn" onclick="hideAboutSection()">
-                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF">
-                            <path d="m313-440 224 224-57 56-320-320 320-320 57 56-224 224h487v80H313Z"/>
-                        </svg>
-                    </button>
-                    <h2 style="font-size:20px; font-weight:500;">Gostos Pessoais</h2>
-                </div>
-                <hr>
-                <?php $userLikes = getUserLikes($conn, $Profile['id']); ?>
-                
-                    <div style="padding: 12px;">
-                        <h4>Tags Seguidas:</h4>
-                    </div>
-                    <div class="likes-container">
-                        <?php if (count($userLikes) > 0): ?> 
-                            <?php foreach($userLikes as $like): ?>
-                                <span class="like-chip"><?= htmlspecialchars($like['nome']) ?></span>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <p style="padding: 16px; text-align: center; color: var(--on-surface);">
-                                Este usuário ainda não selecionou seus gostos pessoais.
-                            </p>
+                    <article class="post-card">
+                        <div class="post-header">
+                            <div class="avatar" style="background: url(<?= htmlspecialchars($Profile['profilePic'] ?? '') ?>); background-repeat: no-repeat; background-size: cover;"></div>
+                            <div class="post-user">
+                                <strong><?= htmlspecialchars($Profile['username']) ?></strong>
+                                <span><?= htmlspecialchars($post['postTime'] ?? '') ?></span>
+                            </div>
+                        </div>
+    
+                        <p class="post-text">
+                            <h2><?= htmlspecialchars($post['titulo'] ?? '') ?></h2>
+                            <?php if($post['tipo'] == 'texto'): ?>
+                                <?= nl2br(quebrarPalavrasGrandes(htmlspecialchars($post['conteudo'] ?? ''))) ?>
+                            <?php endif; ?>
+                        </p>
+                        <?php if($post['tipo'] == 'imagem'): ?>
+                            <img src="<?= htmlspecialchars($post['mediaFile'] ?? '') ?>" onclick="openImageViwer('<?= htmlspecialchars($post['mediaFile'] ?? '') ?>');">
                         <?php endif; ?>
-                    </div>
+                        <?php if($post['tipo'] == 'video'): ?>
+                            <video width="320" height="240" controls>
+                                <source src="<?= htmlspecialchars($post['mediaFile'] ?? '') ?>">
+                                Your browser does not support the video tag.
+                            </video>
+                        <?php endif; ?>
+                        <br>
+                        <?php
+                            $tags = explode(',', $post['tagPost']);
+                            if($tags[0] != 0){
+                                foreach($tags as $tag){
+                                    echo "<span class='tag'>#" . getTagName($conn, $tag, "PT_BR") . "</span>&nbsp;";
+                                }
+                            }
+                        ?>
+                    </article>
+                    <br>
+                    <hr>
+                <?php endforeach ?>
             </div>
-            
-            <!-- Informações do Spotify Section -->
-            <div id="about-spotify" class="about-detail" style="display: none;">
-                <div class="about-header">
-                    <button class="icon-btn" onclick="hideAboutSection()">
-                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF">
-                            <path d="m313-440 224 224-57 56-320-320 320-320 57 56-224 224h487v80H313Z"/>
-                        </svg>
-                    </button>
-                    <h2 style="font-size:20px; font-weight:500;">Informações do Spotify</h2>
-                </div>
+    
+            <div id="tab-albuns" class="tab-content">
+                <center>
+                    <h2 style="font-size:24px; font-weight:500;">Albums:</h2>
+                </center><br>
                 <hr>
-                <p style="padding: 16px; text-align: center; color: var(--on-surface);">
-                    Em breve: integração com Spotify
-                </p>
+                <div class='albuns-pics'>
+                    <?php if($me['id'] == $Profile['id']): ?>
+                        <a href='createAlbum.php'><div class='album'>
+                            <span class='album-cover' style='background-image: url(https://placehold.co/400?text=Novo); background-repeat: no-repeat; background-size: cover;'></span><br>
+                            <center><h2>Criar</h2></center>
+                        </div></a>
+                    <?php endif; ?>
+                    <?php foreach($MeusAlbuns as $album): ?>
+                        <a href='albumViewer.php?albumid=<?= $album['Id'] ?>'><div class='album'>
+                            <span class='album-cover' style='background-image: url(<?= getLastPictureInAlbum($conn, $album['Id']) ?>); background-repeat: no-repeat; background-size: cover;'></span><br>
+                            <center><h2><?=quebrarPalavrasGrandes($album['Titulo'], 8) ?></h2></center>
+                        </div></a>
+                    <?php endforeach; ?>
+                </div>
             </div>
-        </div>
+    
+            <div id="tab-saved" class="tab-content">
+                <center>
+                    <h2 style="font-size:24px; font-weight:500;">Amigos:</h2>
+                </center><br>
+                <hr>
+                <?php $userFriends = getAllFriendFromUser($conn, $Profile['id']) ?>
+                <div class="suggestions" style="padding: 12px;">    
+                    <?php foreach($userFriends as $friend): ?>
+                        <?php $friend = getUserInfo($conn, $friend['friend_id']) ?>
+                        <a href="profile.php?id=<?= $friend['id'] ?>"><div class="suggestion-card">
+                            <div class="suggest-avatar avatar-a" style="background: url(<?= $friend['profilePic'] ?>);  background-repeat: no-repeat;  background-size: cover;"></div>
+                            <span><?= $friend['username'] ?></span>
+                        </div></a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+    
+            <div id="tab-about" class="tab-content">
+                <center>
+                    <h2 style="font-size:24px; font-weight:500;">Sobre:</h2>
+                </center><br>
+                <hr>
+                <div class="two-options" id="about-options">
+                    <div class="a-option" onclick="showAboutSection('gostos')">
+                        <span class="title">Gostos Pessoais</span>
+                        <svg class="arrow" xmlns="http://www.w3.org/2000/svg"
+                            height="24px"
+                            viewBox="0 -960 960 960"
+                            width="24px"
+                            fill="#FFFFFF">
+                            <path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/>
+                        </svg>
+                    </div>
+                </div>
+                
+                <!-- Gostos Pessoais Section -->
+                <div id="about-gostos" class="about-detail" style="display: none;">
+                    <div class="about-header">
+                        <button class="icon-btn" onclick="hideAboutSection()">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF">
+                                <path d="m313-440 224 224-57 56-320-320 320-320 57 56-224 224h487v80H313Z"/>
+                            </svg>
+                        </button>
+                        <h2 style="font-size:20px; font-weight:500;">Gostos Pessoais</h2>
+                    </div>
+                    <hr>
+                    <?php $userLikes = getUserLikes($conn, $Profile['id']); ?>
+                    
+                        <div style="padding: 12px;">
+                            <h4>Tags Seguidas:</h4>
+                        </div>
+                        <div class="likes-container">
+                            <?php if (count($userLikes) > 0): ?> 
+                                <?php foreach($userLikes as $like): ?>
+                                    <span class="like-chip"><?= htmlspecialchars($like['nome']) ?></span>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <p style="padding: 16px; text-align: center; color: var(--on-surface);">
+                                    Este usuário ainda não selecionou seus gostos pessoais.
+                                </p>
+                            <?php endif; ?>
+                        </div>
+                </div>
+                
+                <!-- Informações do Spotify Section -->
+                <div id="about-spotify" class="about-detail" style="display: none;">
+                    <div class="about-header">
+                        <button class="icon-btn" onclick="hideAboutSection()">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF">
+                                <path d="m313-440 224 224-57 56-320-320 320-320 57 56-224 224h487v80H313Z"/>
+                            </svg>
+                        </button>
+                        <h2 style="font-size:20px; font-weight:500;">Informações do Spotify</h2>
+                    </div>
+                    <hr>
+                    <p style="padding: 16px; text-align: center; color: var(--on-surface);">
+                        Em breve: integração com Spotify
+                    </p>
+                </div>
+            </div>
+        <?php endif; ?>
+        <?php if($Profile['tipoConta'] == 'artista'): ?>
+            <div id="tab-draws" class="tab-content active">
+                <center>
+                    <h2 style="font-size:24px; font-weight:500;">Artes:</h2>
+                </center><br>
+                <hr>
+                <div class='pics'>
+                    <?php 
+                        $pics = algoritmoDeDadosEspecificos($conn, $Profile['id']);
+                        foreach($pics as $pic):
+                    ?>
+                        <div class='pic'>
+                            <img src='<?= $pic['mediaFile'] ?>' onclick="openImageViwer('<?= $pic['mediaFile'] ?>')">
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endif; ?>
 
         <script>
         // Tab order for swipe navigation

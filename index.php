@@ -10,7 +10,7 @@
     <title>Verum - Welcome</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="colors.php">
+    <link rel="stylesheet" href="colors.php?id<?= rand(1,10000) ?>">
 </head>
 <body>
 <span class='hideMobile'></span>

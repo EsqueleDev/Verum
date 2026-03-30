@@ -8,7 +8,7 @@
         $musicas = $_POST['musicas'];
         $filmes = $_POST['filmes'];
 
-        $sql = "UPDATE user SET livros ='$livros', musicas ='$musicas', filmes ='$filmes'
+        $sql = "UPDATE users SET livros ='$livros', musicas ='$musicas', filmes ='$filmes'
                 WHERE id = " . $me['id'] .";";
 
         if ($conn->query($sql) === TRUE) {
@@ -24,7 +24,7 @@
     <meta charset="UTF-8">
     <title>Verum - Editar</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="colors.php">
+    <link rel="stylesheet" href="colors.php?id<?= rand(1,10000) ?>">
     <base href="/Project-Verum/">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
@@ -42,7 +42,7 @@
             </svg>
         </div>
         <div class="a-option" onclick="showAboutSection('spotify')">
-            <span class="title">Informações do Spotify</span>
+            <span class="title">Configurar o Last.FM</span>
             <svg class="arrow" xmlns="http://www.w3.org/2000/svg"
                 height="24px"
                 viewBox="0 -960 960 960"
@@ -94,18 +94,21 @@
     </div>
     
     <!-- Informações do Spotify Section -->
-    <div id="about-spotify" class="about-detail" style="display: none;">
+    <div id="about-spotify" class="about-detail" style="display: none; margin: none;">
         <div class="about-header">
             <button class="icon-btn" onclick="hideAboutSection()">
                 <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF">
                     <path d="m313-440 224 224-57 56-320-320 320-320 57 56-224 224h487v80H313Z"/>
                 </svg>
             </button>
-            <h2 style="font-size:20px; font-weight:500;">Informações do Spotify</h2>
+            <h2 style="font-size:20px; font-weight:500;">Informações do Last.FM</h2>
         </div>
         <hr>
         <p style="padding: 16px; text-align: center; color: var(--on-surface);">
-            Em breve: integração com Spotify
+            <p>Ainda não é possivel conectar.</p>
+            <!--
+            Você ainda não vinculou o Last.FM
+            <a href='http://www.last.fm/api/auth/?api_key=e4d09d8b2cf2d85886bea640575a118f'><button class='btn btn-primary'>Configurar Agora</button></a>-->
         </p>
     </div>
     

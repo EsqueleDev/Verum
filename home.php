@@ -23,10 +23,10 @@
     <title>Verum - Feed</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css?id=3">
-    <link rel="stylesheet" href="colors.php">
-    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="colors.php?id<?= rand(1,10000) ?>">
+    <link rel="manifest" href="manifests.json" />
     <!-- ios support -->
-    <link rel="apple-touch-icon" href="Page_Icon.png" />
+    <link rel="apple-touch-icon" href="page_Icon.png" />
     <meta name="apple-mobile-web-app-status-bar" content="#1a1522" />
     <meta name="theme-color" content="#1a1522" />
 </head>
@@ -52,60 +52,69 @@
 
         <!-- POST -->
         <?php $posts = algoritmoGeralSite($conn, $me['id'], 1, 3); ?>
-        <?php foreach($posts as $post): ?>
-            <?php
-                if($post['userId'] == $me['id']){
-                    $isMine = 'true';
-                }
-                else{
-                    $isMine = 'false';
-                }
-            ?>
-            <article class="post-card">
-                <div class="post-header" style='margin-bottom: 12px;'><a href='profile.php?id=<?= $post['userId'] ?>'>
-                    <div class="avatar" style="background: url(<?= htmlspecialchars($post['user']['profilePic'] ?? '') ?>); background-repeat: no-repeat; background-size: cover;"></div>
-                    <div class="post-user">
-                        <strong><?= htmlspecialchars($post['user']['username'] ?? 'Usuário') ?></strong>
-                        <span><?= htmlspecialchars($post['postTime'] ?? '') ?></span>
-                    </div></a>
-                    <a href='postOptions.php?postid=<?= $post['id'] ?>&isMine=<?= $isMine ?>' class='post-options-button'>
-                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--on-background)"><path d="M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z"/></svg>
-                    </a>
-                </div>
-
-                <p class="post-text">
-                    <h2><?= quebrarPalavrasGrandes(htmlspecialchars($post['titulo'] ?? '')) ?></h2><br>
-                    <?php if($post['tipo'] == 'texto'): ?>
-                        <?= nl2br(quebrarPalavrasGrandes(htmlspecialchars($post['conteudo'] ?? ''))) ?>
-                    <?php endif; ?>
-                </p>
-                <?php if($post['tipo'] == 'imagem'): ?>
-                    <img src="<?= htmlspecialchars($post['mediaFile'] ?? '') ?>" onclick="openImageViwer('<?= htmlspecialchars($post['mediaFile'] ?? '') ?>');" loading="lazy" >
-                <?php endif; ?>
-                <?php if($post['tipo'] == 'video'): ?>
-                    <video width="320" height="240" controls>
-                        <source src="<?= htmlspecialchars($post['mediaFile'] ?? '') ?>">
-                        Your browser does not support the video tag.
-                    </video>
-                <?php endif; ?>
-                <br>
-                <div class='tag-box'>
+        <?php if($posts != null): ?>
+            <?php foreach($posts as $post): ?>
                 <?php
-                $tags = explode(',', $post['tagPost']);
-                
-                if(!empty($tags) && $tags[0] != 0){
-                    foreach($tags as $tagId){
-                        $tagName = getTagName($conn, (int)$tagId, "PT_BR");
-                        echo "<span class='tag'>#$tagName</span>";
+                    if($post['userId'] == $me['id']){
+                        $isMine = 'true';
                     }
-                }
+                    else{
+                        $isMine = 'false';
+                    }
                 ?>
-                </div>
-                <br>
-                <br>
-            </article> 
+                <article class="post-card">
+                    <div class="post-header" style='margin-bottom: 12px;'><a href='profile.php?id=<?= $post['userId'] ?>'>
+                        <div class="avatar" style="background: url(<?= htmlspecialchars($post['user']['profilePic'] ?? '') ?>); background-repeat: no-repeat; background-size: cover;"></div>
+                        <div class="post-user">
+                            <strong><?= htmlspecialchars($post['user']['username'] ?? 'Usuário') ?></strong>
+                            <span><?= htmlspecialchars($post['postTime'] ?? '') ?></span>
+                        </div></a>
+                        <a href='postOptions.php?postid=<?= $post['id'] ?>&isMine=<?= $isMine ?>' class='post-options-button'>
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--on-background)"><path d="M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z"/></svg>
+                        </a>
+                    </div>
+                    <a href='post.php?id=<?= $post['id'] ?>'>
+                        <p class="post-text">
+                            <h2><?= quebrarPalavrasGrandes(htmlspecialchars($post['titulo'] ?? '')) ?></h2><br>
+                            <?php if($post['tipo'] == 'texto'): ?>
+                                <?= nl2br(quebrarPalavrasGrandes(htmlspecialchars($post['conteudo'] ?? ''))) ?>
+                            <?php endif; ?>
+                        </p>
+                    </a>
+                    <?php if($post['tipo'] == 'imagem'): ?>
+                        <img src="<?= htmlspecialchars($post['mediaFile'] ?? '') ?>" onclick="openImageViwer('<?= htmlspecialchars($post['mediaFile'] ?? '') ?>', <?= $post['id'] ?>);" loading="lazy" >
+                    <?php endif; ?>
+                    <?php if($post['tipo'] == 'video'): ?>
+                        <video width="320" height="240" controls>
+                            <source src="<?= htmlspecialchars($post['mediaFile'] ?? '') ?>">
+                            Your browser does not support the video tag.
+                        </video>
+                    <?php endif; ?>
+                    <br>
+                    <div class='tag-box'>
+                    <?php
+                    $tags = explode(',', $post['tagPost']);
+                    
+                    if(!empty($tags) && getTagName($conn, $tags[0], "PT_BR") != null){
+                        foreach($tags as $tagId){
+                            $tagName = getTagName($conn, (int)$tagId, "PT_BR");
+                            echo "<span class='tag'>#$tagName</span>";
+                        }
+                    }
+                    ?>
+                    </div>
+                    <br>
+                    <br>
+                </article>
+                <hr>
+            <?php endforeach ?>
+        <?php else: ?>
+            <center>
+                <h1>Ei! Psiu!</h1>
+                <h2>Você começou esta conta agora e ninguem publicou algo sobre seus gostos, adicione alguem para ver posts!</h2>
+            </center>
             <hr>
-        <?php endforeach ?>
+        <?php endif; ?>
         <!-- SUGESTÕES -->
         <?php $randUsers = getLastUsersToEnterWebsite($conn, 1) ?>
             <section class="suggestions-section" style="padding: 15px;">
@@ -142,15 +151,16 @@
                         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--on-background)"><path d="M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z"/></svg>
                     </a>
                 </div>
-
-                <p class="post-text">
-                    <h2><?= quebrarPalavrasGrandes(htmlspecialchars($post['titulo'] ?? '')) ?></h2><br>
-                    <?php if($post['tipo'] == 'texto'): ?>
-                        <?= nl2br(quebrarPalavrasGrandes(htmlspecialchars($post['conteudo'] ?? ''))) ?>
-                    <?php endif; ?>
-                </p>
+                <a href='post.php?id=<?= $post['id'] ?>'>
+                    <p class="post-text">
+                        <h2><?= quebrarPalavrasGrandes(htmlspecialchars($post['titulo'] ?? '')) ?></h2><br>
+                        <?php if($post['tipo'] == 'texto'): ?>
+                            <?= nl2br(quebrarPalavrasGrandes(htmlspecialchars($post['conteudo'] ?? ''))) ?>
+                        <?php endif; ?>
+                    </p>
+                </a>
                 <?php if($post['tipo'] == 'imagem'): ?>
-                    <img src="<?= htmlspecialchars($post['mediaFile'] ?? '') ?>" onclick="openImageViwer('<?= htmlspecialchars($post['mediaFile'] ?? '') ?>');" loading="lazy" >
+                    <img src="<?= htmlspecialchars($post['mediaFile'] ?? '') ?>" onclick="openImageViwer('<?= htmlspecialchars($post['mediaFile'] ?? '') ?>', <?= $post['id'] ?>);" loading="lazy" >
                 <?php endif; ?>
                 <?php if($post['tipo'] == 'video'): ?>
                     <video width="320" height="240" controls>
@@ -163,7 +173,7 @@
                 <?php
                 $tags = explode(',', $post['tagPost']);
                 
-                if(!empty($tags) && $tags[0] != 0){
+                if(!empty($tags) && getTagName($conn, $tags[0], "PT_BR") != null){
                     foreach($tags as $tagId){
                         $tagName = getTagName($conn, (int)$tagId, "PT_BR");
                         echo "<span class='tag'>#$tagName</span>";
@@ -173,7 +183,7 @@
                 </div>
                 <br>
                 <br>
-            </article> 
+            </article>
             <hr>
         <?php endforeach ?>
         <article class="post-card">
@@ -197,7 +207,12 @@
     <?php if(checkNewRequests($conn, $me['id'])): ?>
         <a href="inbox.php"><button class="new-notification-button"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--div)"><path d="M480-80q-33 0-56.5-23.5T400-160h160q0 33-23.5 56.5T480-80Zm0-420ZM160-200v-80h80v-280q0-83 50-147.5T420-792v-28q0-25 17.5-42.5T480-880q25 0 42.5 17.5T540-820v13q-11 22-16 45t-4 47q-10-2-19.5-3.5T480-720q-66 0-113 47t-47 113v280h320v-257q18 8 38.5 12.5T720-520v240h80v80H160Zm475-435q-35-35-35-85t35-85q35-35 85-35t85 35q35 35 35 85t-35 85q-35 35-85 35t-85-35Z"/></svg></button></a>
     <?php endif; ?>
-    <button class="new-post-button hidePC" onclick='redirectNewPost(event)'><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--div)"><path d="m490-527 37 37 217-217-37-37-217 217ZM200-200h37l233-233-37-37-233 233v37Zm355-205L405-555l167-167-29-29-219 219-56-56 218-219q24-24 56.5-24t56.5 24l29 29 50-50q12-12 28.5-12t28.5 12l93 93q12 12 12 28.5T828-678L555-405ZM270-120H120v-150l285-285 150 150-285 285Z"/></svg></button>
+    <?php if($me['tipoConta'] == 'usuario'): ?>
+        <button class="new-post-button btn btn-primary hidePC" style='background: var(--primary-color);' onclick='redirectNewPost(event)'><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--on-button)"><path d="m490-527 37 37 217-217-37-37-217 217ZM200-200h37l233-233-37-37-233 233v37Zm355-205L405-555l167-167-29-29-219 219-56-56 218-219q24-24 56.5-24t56.5 24l29 29 50-50q12-12 28.5-12t28.5 12l93 93q12 12 12 28.5T828-678L555-405ZM270-120H120v-150l285-285 150 150-285 285Z"/></svg></button>
+    <?php endif; ?>
+    <?php if($me['tipoConta'] == 'artista'): ?>
+        <button class="new-post-button btn btn-primary hidePC" style='background: var(--primary-color);' onclick='redirectNewDraw(event)'><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--on-button)"><path d="M160-120v-170l527-526q12-12 27-18t30-6q16 0 30.5 6t25.5 18l56 56q12 11 18 25.5t6 30.5q0 15-6 30t-18 27L330-120H160Zm80-80h56l393-392-28-29-29-28-392 393v56Zm560-503-57-57 57 57Zm-139 82-29-28 57 57-28-29ZM560-120q74 0 137-37t63-103q0-36-19-62t-51-45l-59 59q23 10 36 22t13 26q0 23-36.5 41.5T560-200q-17 0-28.5 11.5T520-160q0 17 11.5 28.5T560-120ZM183-426l60-60q-20-8-31.5-16.5T200-520q0-12 18-24t76-37q88-38 117-69t29-70q0-55-44-87.5T280-840q-45 0-80.5 16T145-785q-11 13-9 29t15 26q13 11 29 9t27-13q14-14 31-20t42-6q41 0 60.5 12t19.5 28q0 14-17.5 25.5T262-654q-80 35-111 63.5T120-520q0 32 17 54.5t46 39.5Z"/></svg></button>
+    <?php endif; ?>
 
     <!-- BOTTOM NAV -->
     <?php include 'nav-bar-bottom.php'; ?>
@@ -406,25 +421,27 @@
     </div>
     <div class="imagem-bottom">
         <center onclick="zoomInImageViwer()"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Zm-40-60v-80h-80v-80h80v-80h80v80h80v80h-80v80h-80Z"/></svg></center>
-        <center><span style="cursor: block;">Ver os Comentarios</span></center>
+        <center><a href='errorPage.php?id=1' id='verComentariosLink'><span style="cursor: block;">Ver os Comentarios</span></a></center>
         <center onclick="zoomOutImageViwer()"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400ZM280-540v-80h200v80H280Z"/></svg></center>
     </div>
 </div>
 <script>
 const visualizador = document.getElementById("image-full");
 const imagemVisu = document.getElementById("imagemVisu");
+const verComentariosLink = document.getElementById('verComentariosLink');
 
 let zoomImage = 1;
 let isDragging = false;
 let startX = 0, startY = 0;
 let currentX = 0, currentY = 0;
 
-function openImageViwer(imageSrc){
+function openImageViwer(imageSrc, postId){
     visualizador.style.display = 'grid';
     zoomImage = 1;
     imagemVisu.src = imageSrc;
     resetPosition();
     applyTransform();
+    verComentariosLink.href = `post.php?id=${postId}`;
 }
 
 function closeImageViwer(){
@@ -641,6 +658,27 @@ document.addEventListener('visibilitychange', () => {
     
         setTimeout(() => {
             window.location.href = 'newPost';
+        }, 600);
+    }
+    
+    function redirectNewDraw(event){
+        const circulos = [
+            document.getElementById('circulo-um'),
+            document.getElementById('circulo-dois'),
+            document.getElementById('circulo-tres')
+        ];
+    
+        circulos.forEach(c => {
+            const size = c.offsetWidth; // largura do círculo
+    
+            c.style.top = (event.clientY - size / 2) + 'px';
+            c.style.left = (event.clientX - size / 2) + 'px';
+    
+            c.classList.remove('no-animation-hide');
+        });
+    
+        setTimeout(() => {
+            window.location.href = 'newDraw.php';
         }, 600);
     }
     

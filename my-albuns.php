@@ -21,27 +21,27 @@
     <title>Seus Albuns</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css?id=1">
-    <link rel="stylesheet" href="colors.php">
+    <link rel="stylesheet" href="colors.php?id<?= rand(1,10000) ?>">
 </head>
 <body>
 <span class='hideMobile'></span>
 <div class="app-container">
     <header class="app-header">
-        <button class="icon-btn"></button>
+        <button class="icon-btn" onclick="window.history.back()"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z"/></svg></button>
         <span class="app-title">Seus Albuns</span>
         <span></span>
     </header>
     
     <div class='albuns-pics'>
-        <div class='album'>
+        <a href='createAlbum.php'><div class='album'>
             <span class='album-cover' style='background-image: url(https://placehold.co/400?text=Novo); background-repeat: no-repeat; background-size: cover;'></span><br>
             <center><h2>Criar</h2></center>
-        </div>
+        </div></a>
         <?php foreach($MeusAlbuns as $album): ?>
-            <div class='album'>
+            <a href='albumViewer.php?albumid=<?= $album['Id'] ?>'><div class='album'>
                 <span class='album-cover' style='background-image: url(<?= getLastPictureInAlbum($conn, $album['Id']) ?>); background-repeat: no-repeat; background-size: cover;'></span><br>
-                <center><h2><?=quebrarPalavrasGrandes($album['Titulo'], 6) ?></h2></center>
-            </div>
+                <center><h2><?=quebrarPalavrasGrandes($album['Titulo'], 8) ?></h2></center>
+            </div></a>
         <?php endforeach; ?>
     </div>
 </div>

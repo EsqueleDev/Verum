@@ -704,7 +704,6 @@ hr{
     border: none;
     padding: 12px;
     border-radius: 12px;
-    background-color: var(--on-button);
 }
 
 .new-notification-button{
@@ -1389,4 +1388,44 @@ a{
 .post-card.active video,
 .post-card.active .tag-box{
     display: none;
+}
+
+.pics{
+    width: 100%;
+    padding: 24px;
+    display: grid;
+    grid-template-columns: 45% 45%;
+    gap: 24px;
+}
+
+.pic{
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 25px;
+    border: 1px var(--on-background) solid;
+    overflow: hidden; /* importante pra cortar a imagem */
+}
+
+.pic img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* agora sim funciona */
+    display: block;
+}
+
+.options-top{
+    width: 100%;
+    padding: 18px;
+}
+
+.option{
+    font-size: 18px;
+    margin-right: 6px;
+    color: var(--on-button);
+}
+
+.option-active{
+    color: var(--on-background);
+    padding-bottom: 12px;
+    border-bottom: 4px var(--button) solid;
 }

@@ -1,186 +1,192 @@
 <?php
 ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+
 session_start();
+
 require_once 'PhpShits/conn.php';
 require_once 'PhpShits/userFunctions.php';
-require_once('PhpShits/funcsTags.php');
-
-// ============================================
-// PROCESSAR POST QUANDO SUBMETIDO
-// ============================================
+require_once 'PhpShits/funcsTags.php';
 
 $post_processed = false;
 $post_error = null;
-$post_data = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // ------------------------------------------------
-    // 1. DETECTAR TIPO DE POST
-    // ------------------------------------------------
+
+    // =========================
+    // USER
+    // =========================
+    if (!isset($_COOKIE['UserId'])) {
+        $post_error = "Usuário não autenticado.";
+    }
+
+    $user_id = (int) $_COOKIE['UserId'];
+
+    // =========================
+    // TYPE
+    // =========================
     $post_type = $_POST['post_type'] ?? 'texto';
-    
-    // Validar tipo de post
     $allowed_types = ['texto', 'imagem', 'video'];
+
     if (!in_array($post_type, $allowed_types)) {
         $post_type = 'texto';
     }
-    
-    // ------------------------------------------------
-    // 2. CAPTURAR DADOS DO POST
-    // ------------------------------------------------
-    $post_title = trim($_POST['post_title'] ?? '');
-    $post_body = '';
-    $media_filename = null;
-    $media_path = null;
-    
-    // ------------------------------------------------
-    // 3. PROCESSAR CONFORME TIPO DE POST
-    // ------------------------------------------------
-    $tags = $_POST['tags'] ?? '';
-    
-    $tags_array = explode(',', $tags);
-    $tags_array = array_map('trim', $tags_array);
-    $tags_array = array_map('strtolower', $tags_array);
-    $tags_array = array_unique($tags_array);
 
+    // =========================
+    // DADOS
+    // =========================
+    $post_title = trim($_POST['post_title'] ?? '');
+    $post_body  = '';
+    $media_path = null;
+
+    // =========================
+    // TAGS (CORRIGIDO)
+    // =========================
+    $raw_tags = $_POST['tags'] ?? '';
+
+    $tags_array = array_filter(array_map(function($tag){
+        return strtolower(trim($tag));
+    }, explode(',', $raw_tags)));
+
+    $tags_id_array = [];
     foreach($tags_array as $tag){
-        $id = createTag($conn, $tag);
-        $tags_id_array[] = $id;
+        if(!empty($tag)){
+            $id = createTag($conn, $tag);
+
+            if($id){
+                $tags_id_array[] = $id;
+            }
+        }
     }
-    
-    $tags = implode(',', $tags_id_array);
+
+    $tags = !empty($tags_id_array) ? implode(',', $tags_id_array) : null;
+
+    // =========================
+    // CONTEÚDO
+    // =========================
     if ($post_type === 'texto') {
-        // Post de texto - capturar corpo
+
         $post_body = trim($_POST['post_content_text'] ?? '');
-        
+
     } elseif ($post_type === 'imagem') {
-        // Post de imagem - processar upload
-        $post_body = trim($_POST['post_content_text'] ?? ''); // opcional caption
-        
-        if (isset($_FILES['post_content_image']) && $_FILES['post_content_image']['error'] === UPLOAD_ERR_OK) {
-            $upload_result = processImageUpload($_FILES['post_content_image']);
-            if ($upload_result['success']) {
-                $media_filename = $upload_result['filename'];
-                $media_path = $upload_result['path'];
+
+        $post_body = trim($_POST['post_content_text'] ?? '');
+
+        if (!empty($_FILES['post_content_image']['name'])) {
+
+            $upload = processImageUpload($_FILES['post_content_image']);
+
+            if ($upload['success']) {
+                $media_path = $upload['path'];
             } else {
-                $post_error = $upload_result['error'];
+                $post_error = $upload['error'];
             }
+
         } else {
-            $post_error = 'Nenhuma imagem selecionada para post de imagem.';
+            $post_error = "Selecione uma imagem.";
         }
-        
+
     } elseif ($post_type === 'video') {
-        // Post de vídeo - processar upload
-        $post_body = trim($_POST['post_content_text'] ?? ''); // opcional caption
-        
-        if (isset($_FILES['post_content_video']) && $_FILES['post_content_video']['error'] === UPLOAD_ERR_OK) {
-            $upload_result = processVideoUpload($_FILES['post_content_video']);
-            if ($upload_result['success']) {
-                $media_filename = $upload_result['filename'];
-                $media_path = $upload_result['path'];
+
+        $post_body = trim($_POST['post_content_text'] ?? '');
+
+        if (!empty($_FILES['post_content_video']['name'])) {
+
+            $upload = processVideoUpload($_FILES['post_content_video']);
+
+            if ($upload['success']) {
+                $media_path = $upload['path'];
             } else {
-                $post_error = $upload_result['error'];
+                $post_error = $upload['error'];
             }
+
         } else {
-            $post_error = 'Nenhum vídeo selecionado para post de vídeo.';
+            $post_error = "Selecione um vídeo.";
         }
     }
-    
-    // ------------------------------------------------
-    // 4. PREPARAR DADOS PARA SQL (USAR NO SEU CÓDIGO)
-    // ------------------------------------------------
-    $post_data = [
-        'type'          => $post_type,
-        'title'         => $post_title,
-        'body'          => $post_body,
-        'media_filename'=> $media_filename,
-        'media_path'    => $media_path,
-        'user_id'       => $_COOKIE['UserId'] ?? null,
-        'created_at'    => date('Y-m-d H:i:s')
-    ];
-    
-    // ------------------------------------------------
-    // 5. EXEMPLO: INSERIR NO BANCO (DESCOMENTE E ADAPTE)
-    // ------------------------------------------------
-    
-    if (!$post_error && $conn) {
-        $stmt = $conn->prepare("INSERT INTO post (userId, tipo, titulo, conteudo, mediaFile, tagPost) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("isssss", 
-            $post_data['user_id'],
-            $post_data['type'],
-            $post_data['title'],
-            $post_data['body'],
-            $post_data['media_path'],
+
+    // =========================
+    // INSERT
+    // =========================
+    if (!$post_error) {
+
+        $stmt = $conn->prepare("
+            INSERT INTO post 
+            (userId, tipo, titulo, conteudo, mediaFile, tagPost) 
+            VALUES (?, ?, ?, ?, ?, ?)
+        ");
+
+        $stmt->bind_param(
+            "isssss",
+            $user_id,
+            $post_type,
+            $post_title,
+            $post_body,
+            $media_path,
             $tags
         );
+
         if ($stmt->execute()) {
             $post_processed = true;
-            // Redirecionar ou mostrar sucesso
+        } else {
+            $post_error = "Erro SQL: " . $stmt->error;
         }
+
         $stmt->close();
-    }
-    
-    
-    if (!$post_error && !empty($post_title)) {
-        $post_processed = true;
     }
 }
 
-// ============================================
-// FUNÇÕES DE PROCESSAMENTO DE IMAGEM/VIDEO
-// ============================================
+// =========================
+// UPLOAD
+// =========================
 
 function processImageUpload($file) {
-    $upload_dir = 'uploads/images/';
-    return processMediaUpload($file, $upload_dir, ['image/jpeg', 'image/png', 'image/gif', 'image/webp'], 10 * 1024 * 1024);
+    return processMediaUpload($file, 'uploads/images/', ['image/jpeg','image/png','image/webp'], 10*1024*1024);
 }
 
 function processVideoUpload($file) {
-    $upload_dir = 'uploads/videos/';
-    return processMediaUpload($file, $upload_dir, ['video/mp4', 'video/webm', 'video/ogg'], 50 * 1024 * 1024);
+    return processMediaUpload($file, 'uploads/videos/', ['video/mp4','video/webm'], 50*1024*1024);
 }
 
-function processMediaUpload($file, $upload_dir, $allowed_types, $max_size) {
-    $result = ['success' => false, 'filename' => null, 'path' => null, 'error' => null];
-    
-    // Validar tamanho
-    if ($file['size'] > $max_size) {
-        $result['error'] = 'Arquivo muito grande. Tamanho máximo: ' . ($max_size / 1024 / 1024) . 'MB';
-        return $result;
+function processMediaUpload($file, $dir, $types, $max) {
+
+    $res = ['success'=>false,'path'=>null,'error'=>null];
+
+    if ($file['size'] > $max) {
+        $res['error'] = "Arquivo muito grande";
+        return $res;
     }
-    
-    // Validar tipo MIME
+
+    if (!class_exists('finfo')) {
+        $res['error'] = "Fileinfo não ativo";
+        return $res;
+    }
+
     $finfo = new finfo(FILEINFO_MIME_TYPE);
-    $mime_type = $finfo->file($file['tmp_name']);
-    if (!in_array($mime_type, $allowed_types)) {
-        $result['error'] = 'Tipo de arquivo não permitido.';
-        return $result;
-    }
-    
-    // Criar diretório se não existir
-    if (!is_dir($upload_dir)) {
-        mkdir($upload_dir, 0755, true);
-    }
-    
-    // Gerar nome único
-    $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-    $filename = uniqid('post_') . '_' . time() . '.' . $extension;
-    $destination = $upload_dir . $filename;
-    
-    // Mover arquivo
-    if (move_uploaded_file($file['tmp_name'], $destination)) {
-        $result['success'] = true;
-        $result['filename'] = $filename;
-        $result['path'] = $destination;
-    } else {
-        $result['error'] = 'Erro ao fazer upload do arquivo.';
-    }
-    
-    return $result;
-}
+    $mime  = $finfo->file($file['tmp_name']);
 
+    if (!in_array($mime, $types)) {
+        $res['error'] = "Tipo inválido";
+        return $res;
+    }
+
+    if (!is_dir($dir)) {
+        mkdir($dir, 0755, true);
+    }
+
+    $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+    $name = uniqid() . '.' . $ext;
+    $path = $dir . $name;
+
+    if (move_uploaded_file($file['tmp_name'], $path)) {
+        $res['success'] = true;
+        $res['path'] = $path;
+    } else {
+        $res['error'] = "Erro upload";
+    }
+
+    return $res;
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -189,7 +195,7 @@ function processMediaUpload($file, $upload_dir, $allowed_types, $max_size) {
     <title>Verum - Criar Post</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="colors.php">
+    <link rel="stylesheet" href="colors.php?id<?= rand(1,10000) ?>">
     <script>
         function previewImage(input) {
             if (input.files && input.files[0]) {
@@ -359,6 +365,7 @@ function processMediaUpload($file, $upload_dir, $allowed_types, $max_size) {
                         id="tag-input"
                         placeholder="Digite uma tag e aperte ENTER"
                         maxlength="11"
+                        required
                     >
                     <br>
                     <button type="submit" class="btn btn-primary">Publicar</button>
@@ -401,8 +408,26 @@ function processMediaUpload($file, $upload_dir, $allowed_types, $max_size) {
             input.value = "";
     
             hidden.value = tags.join(",");
+            
+            input.removeAttribute('required');
         }
     
+    });
+    
+    document.querySelector("form").addEventListener("submit", () => {
+    
+        let tag = input.value.trim().toLowerCase();
+    
+        if(tag !== ""){
+            tag = tag.replace(/\s+/g, "");
+    
+            if(!tags.includes(tag)){
+                tags.push(tag);
+                createTag(tag);
+            }
+        }
+    
+        hidden.value = tags.join(",");
     });
     
     function createTag(tag){

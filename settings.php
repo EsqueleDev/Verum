@@ -5,7 +5,7 @@
     <title>Configurações</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css?id=1">
-    <link rel="stylesheet" href="colors.php">
+    <link rel="stylesheet" href="colors.php?id<?= rand(1,10000) ?>">
 </head>
 <body>
 
@@ -56,20 +56,19 @@
 
         <i><h2>Ainda não operando:</h2></i>
         <!-- ITEM -->
-
-        <!-- ITEM -->
         <div class="action-card option-name">
+        <!-- ITEM -->
             <span>
                 <strong>Sua Privacidade</strong>
                 <p style="font-size:13px; color:var(--on-button);">
-                    Decida quem pode ver certas informações
+                    Escolha oque ocultar para quem não é seu amigo
                 </p>
             </span>
             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/></svg>
         </div>
 
         <!-- ITEM -->
-        <div class="action-card option-name">
+        <!--<div class="action-card option-name" onclick="window.location.href='editSecurityInfo.php';">
             <span>
                 <strong>Informações de login</strong>
                 <p style="font-size:13px; color:var(--on-button);">
@@ -77,7 +76,7 @@
                 </p>
             </span>
             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/></svg>
-        </div>
+        </div>-->
 
     </div>
 

@@ -12,7 +12,7 @@
     <title>Deslogar</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css?id=1">
-    <link rel="stylesheet" href="colors.php">
+    <link rel="stylesheet" href="colors.php?id<?= rand(1,10000) ?>">
 </head>
 <body>
 
@@ -30,7 +30,6 @@
                 <input name='postId' value='<?= $postId ?>' type='hidden'>
             </form>
             <a href='home.php'><button class='btn btn-secondary'>Não, volte a pagina inical.</button><br></a>
-            <p>Lembre sempre que a exclusão estara sujeita os termos de serviço.</p>
         </div>
     </center>
 </div>
